@@ -1,4 +1,15 @@
 
+ This tutorial demonstrates the use of NL's fungible ticket contracts(https://gitlab.com/metastatedev/tezos/-/blob/proto-proposal/tests_python/contracts_alpha/mini_scenarios/ticket_builder_fungible.tz and https://gitlab.com/metastatedev/tezos/-/blob/proto-proposal/tests_python/contracts_alpha/mini_scenarios/ticket_wallet_fungible.tz) on Edonet.
+ 
+In this example, the sequence of steps is as follows: 
+
+1. Admin of the Builder contract mints 2 tickets for Alice.
+2. Alice sends those 2 tickets seperately to Bob
+3. Bob burns the two tickets by sending them to the builders `burn` entrypoint
+
+Builder contract is on edonet at address: "KT1Q9438XGRGQmWFEuoi5heQiASA5eszRi2x"
+Wallet contracts deployed at addresses: "KT1N6VjvuuBfXBbsyMby96zkYeaWuqCto69Q", "KT1AqgENraEg8oro9gJ61mocjRLGBBkya4DQ"
+
 ## Address Constants
 ```
 $ ELI="tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW"
@@ -96,7 +107,7 @@ $ BUILDER="KT1Q9438XGRGQmWFEuoi5heQiASA5eszRi2x"
 ```
 
 
-## Wallet orignations
+## Wallet orignations (Alice and Bob)
 ```
 $ tezos-client originate contract ticket_wallet1 transferring 0 from alice-edo running ~/TQ/metastate-tezos/tests_python/contracts/mini_scenarios/ticket_wallet_fungible.tz --burn-cap 3000 --init "Pair \"$ALICE\" {}" >> ~/output.txt 2>&1
 
@@ -348,7 +359,7 @@ $ WALLET2="KT1AqgENraEg8oro9gJ61mocjRLGBBkya4DQ"
 
 ```
 
-## Mint 2 tickets to Alice
+## Mint 2 tickets to Alice (Wallet1)
 
 ```
 
@@ -409,7 +420,7 @@ and/or an external block explorer.
 
 ```
 
-## Alice sends 1 ticket to Bob (This is doing a SPLIT on the tickets in Alice's wallet)
+## Alice sends 1 ticket to Bob (Wallet2). This SPLITs the tickets in Alice's wallet
 
 ```
 $ tezos-client transfer 0 from alice-edo to ticket_wallet1 --entrypoint "send" --burn-cap 3000 --arg "Pair \"${WALLET2}%receive\" (Pair 1 \"${BUILDER}\")" >> ~/output.txt 2>&1
@@ -472,7 +483,7 @@ and/or an external block explorer.
 
 ```
 
-#Alice sends 1 more ticket to Bob (This one should be executing JOIN inside Wallet2 but no SPLIT in Wallet1)
+## Alice sends 1 more ticket to Bob. This one executes JOIN inside Wallet2 (Bob) but no SPLIT in Wallet1 (Alice)
 ```
 $ tezos-client transfer 0 from alice-edo to ticket_wallet1 --entrypoint "send" --burn-cap 3000 --arg "Pair \"${WALLET2}%receive\" (Pair 1 \"${BUILDER}\")" >> ~/output.txt 2>&1
 
