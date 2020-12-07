@@ -20,8 +20,8 @@ code
         # Check that the ticket is ticketed by this contract
         READ_TICKET; UNPAIR; SELF_ADDRESS; ASSERT_CMPEQ;
         
-        #Send amount of ticket back to Sender
-        CDR; SENDER; CONTRACT unit;
+        #Send amount of ticket back to Source
+        CDR; SOURCE; CONTRACT unit;
         IF_NONE
           { DROP ; PUSH string "contract not found" ; FAILWITH } 
           { SWAP ; PUSH mutez 1; MUL; UNIT ; TRANSFER_TOKENS } ; 
