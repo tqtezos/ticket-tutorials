@@ -7,6 +7,8 @@ The sequence of steps in the below tutorial is as follows:
 3) Alice and Bob burn all of their tickets, each redeeming 1 tez respectively in the process. 
 
 
+The builder contract is on edonet at address KT1PZXkw968qQ6Gy8kN1nDbKmyMG2edhpncB and the two wallet contracts which are in fact the same as the wallet contracts in NL-ticket tutorial are on edonet at KT1HJJ8kbYB1g4XwXewa1NmP6hZehKFDrPX1 and KT1TDFT1KN26daV6gEazd7XBr4cAP9VkhkLu
+
 ## Set Address Constants
 ```
 $ ELI="\"tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW\""
