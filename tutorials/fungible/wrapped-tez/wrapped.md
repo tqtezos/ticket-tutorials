@@ -1,3 +1,11 @@
+This tutorial demonstrates a minor modification of the NL ticket contracts in the previous tutorial, to create a contract that wraps tez. A user mints N tickets by calling mint entrypoint of their builder contract and sending N mutez in the operation. They are then free to trade around those tickets to other wallets, like they would tez, all while delegating the tez they deposited to the builder contract. Anyone in posession of these tickets can redeem them for the equivalent amount of tez by sending their tickets to the burn entrypoint of the builder contract. In this way, the user has created a token collateralized by tez that she has full delegation control over
+
+The sequence of steps in the below tutorial is as follows:
+
+1) Eli mints 2,000,000 tickets for Alice while locking 2 tez in his builder contract. 
+2) Alice sends 1,000,000 of them to Bob.
+3) Alice and Bob burn all of their tickets, each redeeming 1 tez respectively in the process. 
+
 
 ## Set Address Constants
 ```
@@ -6,7 +14,7 @@ $ ALICE="\"tz1VeDGbCBNECVML7s7vkTQGSUCtSE54ZGAv\""
 $ BOB="\"tz1ebzubQKGg5AJ2z9Ydun9HzLLy4AzngZq6\""
 ```
 
-## Originate Builder  
+## Originate Builder (In practice, user will want to include --delegate flag to delegate locked tez)
 
 ```
 $ tezos-client originate contract wrapped-builder transferring 0 from eli-edo running ~/TQ/ticket-tutorials/tutorials/fungible/wrapped-tez/builder.tz --burn-cap 3000 --init $ELI >> ~/output.txt 2>&1
@@ -96,6 +104,8 @@ Contract memorized as wrapped-builder.
 $ BUILDER="KT1PZXkw968qQ6Gy8kN1nDbKmyMG2edhpncB"
 
 ```
+
+## Originate Wallets
 
 ```
 $ ./tezos-client originate contract wrapped_wallet1 transferring 0 from alice-edo running ~/TQ/ticket-tutorials/tutorials/fungible/wrapped-tez/wallet.tz --burn-cap 3000 --init "Pair $ALICE {}" >> ~/output.txt 2>&1
