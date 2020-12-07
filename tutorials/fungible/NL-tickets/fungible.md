@@ -1,7 +1,7 @@
 
  This tutorial demonstrates the use of NL's fungible ticket contracts(https://gitlab.com/metastatedev/tezos/-/blob/proto-proposal/tests_python/contracts_alpha/mini_scenarios/ticket_builder_fungible.tz and https://gitlab.com/metastatedev/tezos/-/blob/proto-proposal/tests_python/contracts_alpha/mini_scenarios/ticket_wallet_fungible.tz) on Edonet.
- 
-In this example, the sequence of steps is as follows: 
+
+In this example, the sequence of steps is as follows:
 
 1. Admin of the Builder contract mints 2 tickets for Alice.
 2. Alice sends those 2 tickets seperately to Bob
@@ -15,12 +15,10 @@ Wallet contracts deployed at addresses: "KT1N6VjvuuBfXBbsyMby96zkYeaWuqCto69Q", 
 $ ELI="tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW"
 $ ALICE="tz1VeDGbCBNECVML7s7vkTQGSUCtSE54ZGAv"
 $ BOB="tz1ebzubQKGg5AJ2z9Ydun9HzLLy4AzngZq6"
-$ BUILDER_CODE="~/TQ/metastate-tezos/tests_python/contracts/mini_scenarios/ticket_builder_fungible.tz"
-$ WALLET_CODE="~/TQ/metastate-tezos/tests_python/contracts/mini_scenarios/ticket_wallet_fungible.tz"
 ```
 ## Builder Origination
 ```
-$ tezos-client originate contract ticket_builder_fungible transferring 0 from eli-edo running $BUILDER_CODE --burn-cap 3000 --init "\"$ELI\"" >> ~/output.txt 2>&1
+$ tezos-client originate contract ticket_builder_fungible transferring 0 from eli-edo running ~/TQ/metastate-tezos/tests_python/contracts/mini_scenarios/ticket_builder_fungible.tz --burn-cap 3000 --init "\"$ELI\"" >> ~/output.txt 2>&1
 
 Warning:  the --addr --port --tls options are now deprecated; use --endpoint instead
 Node is bootstrapped.
