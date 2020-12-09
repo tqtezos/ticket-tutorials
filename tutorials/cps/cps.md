@@ -7,6 +7,13 @@ The sequence of steps below is as follows:
 2) `cps-bank` mints 12 tokens to wallet `cps-balance`
 3) Alice (arbitrary address) calls getBalance entrypoint in `cps-bank` which mints a ticket wrapping wallet address and sends that ticket along with wallet balance to oracle who converts the balance to tez based on its conversion rate (2) and sends the converted balance of 24 tez along with ticket to the wallet which authenticates the ticket and records the converted balance.   
 
+
+Contracts are on edonet at addresses:
+
+cps-bank: "KT1MPKu836t9AP6yeVE7rUm7faieYrpoKqWw"
+cps-balance: "KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP"
+cps-oracle: "KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g"
+
 ## Address constants for reference 
 ```
 alice-edo: tz1VeDGbCBNECVML7s7vkTQGSUCtSE54ZGAv
