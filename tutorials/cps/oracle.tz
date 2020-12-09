@@ -1,0 +1,19 @@
+parameter (or (pair %sendConvertedBalance (ticket address) nat) (mutez %setConversionRate));
+storage mutez;
+code 
+  { 
+    UNPAIR; 
+    IF_LEFT
+      {
+        UNPAIR; READ_TICKET; CDAR; CONTRACT (pair (ticket address) mutez);
+        IF_NONE
+          { DROP; PUSH string "contract not found"; FAILWITH } 
+          { PUSH mutez 0; DIP 3 {DUP 2; MUL}; DIP 2 {PAIR}; DIG 2; TRANSFER_TOKENS};
+        NIL operation; SWAP; CONS;
+      }
+      {
+        SWAP; DROP; NIL operation
+      }; 
+    PAIR
+  }
+ 
