@@ -1,3 +1,23 @@
+This tutorial demonstrates the way tickets make feasible CPS (continuation passing style) contract interaction in Tezos. The general situation is C trusts A but not B, but A wants to send C information via B. A can pass a ticket to B and B can pass that ticket to C when sending its data and now C knows that B is to be trusted because it sees the ticket was created by A. 
+
+The scenario below is an example where a wallet contract `cps-balance` has some balance of tokens in the modified FA1.2 contract `cps-bank`. `cps-bank` has a `getBalance` entrypoint but instead of sending some users balance directly to the wallet, it sends the balance to an oracle `cps-oracle` (that is given as a continuation in the entrypoint) along with an authentication ticket. The oracle then converts the balance to tez based on some conversion rate in storage and sends the converted balance along with the same ticket to the wallet `cps-balance` who knows it can trust that the balance a) came from its trusted bank and b) is actually its balance and not someone elses.  
+
+The sequence of steps below is as follows: 
+1) Originate contracts
+2) `cps-bank` mints 12 tokens to wallet `cps-balance`
+3) Alice (arbitrary address) calls getBalance entrypoint in `cps-bank` which mints a ticket wrapping wallet address and sends that ticket along with wallet balance to oracle who converts the balance to tez based on its conversion rate (2) and sends the converted balance of 24 tez along with ticket to the wallet which authenticates the ticket and records the converted balance.   
+
+## Address constants for reference 
+```
+alice-edo: tz1VeDGbCBNECVML7s7vkTQGSUCtSE54ZGAv
+eli-edo: tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW
+
+```
+
+## Originate Bank, Oracle, and Balance contracts
+```
+$ ./tezos-client originate contract cps-bank transferring 0 from eli-edo running ~/TQ/ticket-tutorials/tutorials/cps/bank.tz --init "(Pair (Pair "\"tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW\"" {}) (Pair False 0))" --burn-cap 3000 >> ~/output.txt 2>&1
+
 Warning:  the --addr --port --tls options are now deprecated; use --endpoint instead
 Node is bootstrapped.
 Estimated gas: 18496.784 units (will add 100 for safety)
@@ -649,6 +669,11 @@ Use command
   tezos-client wait for ooMsoty6HNztjafUJrkSPJYBskzxQwyeUvXJ9TWJSWJMFWxfLe6 to be included --confirmations 30 --branch BLai2f4AGoKv5YByBRUNndZVJsALNXBjBd9jKX2Z2ZzDvPmVcF6
 and/or an external block explorer.
 Contract memorized as cps-bank.
+
+$ CPS-BANK="KT1MPKu836t9AP6yeVE7rUm7faieYrpoKqWw"
+
+$ ./tezos-client originate contract cps-balance transferring 0 from eli-edo running ~/TQ/ticket-tutorials/tutorials/cps/balance.tz --init "Pair "\"KT1MPKu836t9AP6yeVE7rUm7faieYrpoKqWw\"" 0" --force --burn-cap 3000 >> ~/output.txt 2>&1
+
 Warning:  the --addr --port --tls options are now deprecated; use --endpoint instead
 Node is bootstrapped.
 Estimated gas: 2438.448 units (will add 100 for safety)
@@ -708,38 +733,11 @@ Use command
   tezos-client wait for oobePVBE7bM4pxjkCkizLhARftuKasJ8WwGCUK2vJ8rUmQo2gNF to be included --confirmations 30 --branch BLi1QNuRtT6H8em4HKnPqN6dcfYj6jJUBL69h1H2va5aFLrSEqP
 and/or an external block explorer.
 Contract memorized as cps-balance.
-Warning:  the --addr --port --tls options are now deprecated; use --endpoint instead
-Error:
-  Erroneous command line argument 7 (bootstrap1).
-  no contract or key named bootstrap1
-  bad contract notation
-  Invalid contract notation "bootstrap1"
 
-Usage:
-  tezos-client [global options] command [command options]
-  tezos-client --help (for global options)
-  tezos-client [global options] command --help (for command options)
+$ CPS-BALANCE="KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP"
 
-To browse the documentation:
-  tezos-client [global options] man (for a list of commands)
-  tezos-client [global options] man -v 3 (for the full manual)
+$ ./tezos-client originate contract cps-oracle transferring 0 from bootstrap1 running ~/TQ/ticket-tutorials/tutorials/cps/oracle.tz --init "2" --burn-cap 3000 >> ~/output.txt 2>&1
 
-Global options (must come before the command):
-  -d --base-dir <path>: client data directory
-  -c --config-file <path>: configuration file
-  -t --timings: show RPC request times
-  --chain <hash|tag>: chain on which to apply contextual commands (possible tags are 'main' and 'test')
-  -b --block <hash|tag>: block on which to apply contextual commands (possible tags are 'head' and 'genesis')
-  -w --wait <none|<int>>: how many confirmation blocks before to consider an operation as included
-  -p --protocol <hash>: use commands of a specific protocol
-  -l --log-requests: log all requests to the node
-  -A --addr <IP addr|host>: [DEPRECATED: use --endpoint instead] IP address of the node
-  -P --port <number>: [DEPRECATED: use --endpoint instead] RPC port of the node
-  -S --tls: [DEPRECATED: use --endpoint instead] use TLS to connect to node.
-  -E --endpoint <uri>: HTTP(S) endpoint of the node RPC interface; e.g. 'http://localhost:8732'
-  -R --remote-signer <uri>: URI of the remote signer
-  -f --password-filename <filename>: path to the password filename
-  -M --mode <client|mockup>: how to interact with the node
 Warning:  the --addr --port --tls options are now deprecated; use --endpoint instead
 Node is bootstrapped.
 Estimated gas: 2286.371 units (will add 100 for safety)
@@ -802,6 +800,15 @@ Use command
   tezos-client wait for op8AipsT8DBzUr6Te5hiahwe91FCEVdZ9Q5CqBysxF18fT35GuG to be included --confirmations 30 --branch BMWaGPVsJn7ydxy2KAKcnUriNew5nmQtiHArTpqwjRLqevKH2oS
 and/or an external block explorer.
 Contract memorized as cps-oracle.
+
+CPS-ORACLE="KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g"
+
+```
+## Mint 12 tokens for Balance contract 
+
+```
+$ ./tezos-client transfer 0 from eli-edo to cps-bank --entrypoint "mint" --arg "Pair \"KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP\" 12" --burn-cap 3000 >> ~/output.txt 2>&1
+
 Warning:  the --addr --port --tls options are now deprecated; use --endpoint instead
 Node is bootstrapped.
 Estimated gas: 20123.527 units (will add 100 for safety)
@@ -842,6 +849,12 @@ We recommend to wait more.
 Use command
   tezos-client wait for onyAdbHctXbzUtVnZqfRHQMChZm8MoRyqenxeB3bWEH2xj9jQbv to be included --confirmations 30 --branch BLRahc4tDGVXEbqWLBLubpVVumYdz8r1bBkp2BDj8N9WmPMpeMv
 and/or an external block explorer.
+```
+## Anyone can call getBalance entrypoint in bank contract, send that information to the Oracle to convert balance to tez,  which will then send that information to Balance contract to be recorded in its records. Balance knows that the information sent to it is in fact a) from the the trusted bank and b) his balance and not someone else's. 
+
+```
+$ ./tezos-client transfer 0 from alice-edo to cps-bank --entrypoint "getBalance" --arg "Pair \"KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP\"  \"KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g%sendConvertedBalance\"" --burn-cap 3000 --dry-run
+
 Warning:  the --addr --port --tls options are now deprecated; use --endpoint instead
 Node is bootstrapped.
 Estimated gas: 30290.248 units (will add 100 for safety)
@@ -903,3 +916,4 @@ We recommend to wait more.
 Use command
   tezos-client wait for oo2qTCeotXN8EXTLoaiee3Hg6ahUbAcWztX8JgxTXChmwyD3xb8 to be included --confirmations 30 --branch BLNnbrLMxt5mVfCodpQunmAeYwM9ib1gcJtoT8f85zPXW51RX5U
 and/or an external block explorer.
+```
