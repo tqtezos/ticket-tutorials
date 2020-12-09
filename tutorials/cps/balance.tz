@@ -1,0 +1,26 @@
+parameter (pair %receive (ticket %auth address) (mutez %balance));
+storage (pair (address %bank_address) (mutez %balance));
+code
+  {
+    UNPAIR; 
+    
+    UNPAIR; READ_TICKET; UNPAIR; 
+  
+    #Ensure minter is trusted bank
+    DUP 5; CAR; ASSERT_CMPEQ;
+  
+    #Ensure ticket was minted for me
+    UNPAIR; SELF_ADDRESS; ASSERT_CMPEQ;
+
+    #Ensure only 1 ticket passed
+    PUSH nat 1; ASSERT_CMPEQ;
+
+    #Drop ticket
+    DROP;
+  
+    #update balance
+    UPDATE 2;
+  
+    NIL operation;
+    PAIR; 
+  }
