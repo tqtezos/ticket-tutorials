@@ -1,5 +1,3 @@
-#Based on contract at https://github.com/muditmarda/TezAuction/blob/master/contracts/Dutch.py
-
 import smartpy as sp
 
 auction_params_type = sp.TRecord(opening_price = sp.TNat,
@@ -8,27 +6,32 @@ auction_params_type = sp.TRecord(opening_price = sp.TNat,
         round_time = sp.TInt,
         ticket = sp.TTicket(sp.TNat))
 
+metadata_type = sp.TMap(sp.TString, sp.TBytes)
+
+token_metadata_type = sp.TBigMap(sp.TNat,
+        sp.TPair(sp.TNat, metadata_type))
+
 class NFTWallet(sp.Contract):
     def __init__(self, owner):
         self.add_flag("edo")
         self.init_type(sp.TRecord(admin = sp.TAddress,
                  tickets = sp.TBigMap(sp.TNat,
-                 sp.TPair(sp.TOption(sp.TTicket(sp.TNat)),
-                 sp.TOption(sp.TBytes))),
-                 current_id = sp.TNat))
+                   sp.TOption(sp.TTicket(sp.TNat))),
+                 current_id = sp.TNat,
+                 token_metadata = token_metadata_type))
         self.init(admin = owner,
-                tickets = sp.big_map(tkey = sp.TNat,
-                tvalue = sp.TPair(sp.TOption(sp.TTicket(sp.TNat)),
-                sp.TOption(sp.TBytes))),
-                current_id = 0)
+                tickets = sp.big_map({}),
+                current_id = 0,
+                token_metadata = sp.big_map({}))
 
     @sp.entry_point
     def createNft(self, metadata):
-        sp.set_type(metadata, sp.TBytes)
+        sp.set_type(metadata, metadata_type)
         sp.verify(sp.sender == self.data.admin)
         t = sp.ticket(self.data.current_id, 1)
         current_id = self.data.current_id
-        self.data.tickets[current_id] = sp.pair(sp.some(t), sp.some(metadata))
+        self.data.tickets[current_id] = sp.some(t)
+        self.data.token_metadata[current_id] = sp.pair(current_id, metadata)
         self.data.current_id = current_id + 1
 
     @sp.entry_point
@@ -41,31 +44,15 @@ class NFTWallet(sp.Contract):
         sp.verify(qty == 1, "Only send 1 Nft to this entrypoint")
         sp.verify(sp.source == self.data.admin, "Ticket needs to be sent by wallet admin")
         current_id = self.data.current_id
-        self.data.tickets[current_id] = sp.pair(sp.some(ticket_next), sp.none)
+        self.data.tickets[current_id] = sp.some(ticket_next)
         self.data.current_id = current_id + 1
 
     def sendNft(self, params):
         sp.set_type(params, sp.TRecord(ticket_id = sp.TNat, send_to = sp.TContract(sp.TTicket(sp.TNat))))
         sp.verify(sp.sender == self.data.admin)
-        sp.verify(self.data.tickets.contains(params.ticket_id) & sp.fst(self.data.tickets[params.ticket_id]).is_some(), "Ticket does not exist")
+        sp.verify(self.data.tickets.contains(params.ticket_id) & self.data.tickets[params.ticket_id].is_some(), "Ticket does not exist")
         t = self.data.tickets[params.ticket_id].open_some()
         sp.transfer(t, sp.mutez(0), c)
-
-    #@sp.entry_point
-    #def getNftData(self, params):
-    #    params_type = sp.TPair(sp.TString, sp.TContract(sp.TBytes))
-    #    sp.set_type(params, params_type)
-    #    ticket_name = sp.fst(params)
-    #    requesting_contract = sp.snd(params)
-    #    sp.verify(self.data.tickets.contains(ticket_name) & sp.fst(self.data.tickets[ticket_name]).is_some(), "Ticket does not exist")
-    #    ticket = sp.fst(self.data.tickets[ticket_name]).open_some()
-    #    possible_metadata = sp.snd(self.data.tickets[ticket_name])
-    #    sp.if possible_metadata.is_some():
-    #      sp.transfer(possible_metadata.open_some(), sp.mutez(0), requesting_contract)
-    #    sp.else:
-    #      ticket_address = sp.compute(sp.fst(sp.fst(sp.read_ticket(ticket))))
-    #      c = sp.contract(params_type, ticket_address, entry_point = "getNftData").open_some()
-    #      sp.transfer(params, sp.mutez(0), c)
 
     @sp.entry_point
     def configNftAuction(self, params):
@@ -76,20 +63,14 @@ class NFTWallet(sp.Contract):
                 start_time = sp.TTimestamp,
                 round_time = sp.TInt,
                 ticket_id = sp.TNat))
-        sp.verify(self.data.tickets.contains(params.ticket_id) & sp.fst(self.data.tickets[params.ticket_id]).is_some(), "Ticket does not exist")
+        sp.verify(self.data.tickets.contains(params.ticket_id) & self.data.tickets[params.ticket_id].is_some(), "Ticket does not exist")
         auction_params = sp.record(opening_price = params.opening_price,
                 reserve_price = params.reserve_price,
                 start_time = params.start_time,
                 round_time = params.round_time,
-                ticket = sp.fst(self.data.tickets[params.ticket_id]).open_some())
+                ticket = self.data.tickets[params.ticket_id].open_some())
         auction_contract = sp.contract(auction_params_type, params.auction_address, entry_point = "configureAuction").open_some()
         sp.transfer(auction_params, sp.mutez(0), auction_contract)
-
-    #@sp.entry_point
-    #def startNftAuction(self, auction_address):
-    #    sp.verify(sp.sender == self.data.admin)
-    #    auction_contract = sp.contract(sp.TUnit, auction_address, entry_point = "startAuction").open_some()
-    #    sp.transfer(sp.unit, sp.mutez(0), auction_contract)
 
 class DutchAuction(sp.Contract):
     def __init__(self, admin):
@@ -226,11 +207,12 @@ def test():
     bob_wallet = NFTWallet(bob.address)
     scenario += alice_wallet
     scenario += bob_wallet
-#
+
     scenario.h2("Create NFT")
-#
-    scenario += alice_wallet.createNft(sp.bytes('0x0000')).run(sender = alice)
-#
+
+    token_metadata = sp.map({"name" : sp.bytes_of_string("Nft1")})
+    scenario += alice_wallet.createNft(token_metadata).run(sender = alice)
+
     scenario.h2("Configure and start auction")
     scenario += alice_wallet.configNftAuction(auction_address = auction.address,
             opening_price = 100,
@@ -238,14 +220,15 @@ def test():
             start_time = time,
             round_time = 1000,
             ticket_id = 0).run(source = alice, sender = alice, now = time)
-    #scenario.verify(~ sp.fst(alice_wallet.data.tickets["nft1"]).is_some())
+    #scenario.verify(~ sp.fst(alice_wallet.data.tickets[0]).is_some())
+    sp.fst(alice_wallet.data.tickets[0])
     time = time.add_seconds(1)
     scenario += auction.startAuction().run(sender = alice, now = time)
 
     time = time.add_seconds(6001)
-#
+
     scenario += auction.dropPrice(90).run(sender = alice, now = time)
-#
+
     scenario.h2("Bob buys")
     time = time.add_seconds(1)
     scenario += auction.buy(bob_wallet.address).run(sender = bob, source = bob, now = time, amount = sp.mutez(90))
