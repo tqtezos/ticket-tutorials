@@ -1,0 +1,305 @@
+parameter (or (or (pair %configNftAuction (pair (address %auction_address) (pair (nat %opening_price) (nat %reserve_price))) (pair (int %round_time) (pair (timestamp %start_time) (nat %ticket_id)))) (map %createNft string bytes)) (or (ticket %receiveNft nat) (pair %sendNft (contract %send_to (ticket nat)) (nat %ticket_id))));
+storage   (pair (pair (address %admin) (nat %current_id)) (pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes)))));
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    IF_LEFT
+      {
+        IF_LEFT
+          {
+            SWAP;       # @storage : @parameter%configNftAuction
+            # == configNftAuction ==
+            # sp.verify(sp.sender == self.data.admin) # @storage : @parameter%configNftAuction
+            DUP;        # @storage : @storage : @parameter%configNftAuction
+            DUG 2;      # @storage : @parameter%configNftAuction : @storage
+            CAAR;       # address : @parameter%configNftAuction : @storage
+            SENDER;     # address : address : @parameter%configNftAuction : @storage
+            COMPARE;    # int : @parameter%configNftAuction : @storage
+            EQ;         # bool : @parameter%configNftAuction : @storage
+            IF
+              {}
+              {
+                PUSH string "WrongCondition: sp.sender == self.data.admin"; # string : @parameter%configNftAuction : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%configNftAuction : @storage
+            SWAP;       # @storage : @parameter%configNftAuction
+            # match_pair_71_fst, match_pair_71_snd = sp.match_tuple(sp.get_and_update(self.data.tickets, params.ticket_id, sp.none), names = [ "match_pair_71_fst", "match_pair_71_snd" ]) # @storage : @parameter%configNftAuction
+            DUP;        # @storage : @storage : @parameter%configNftAuction
+            DUG 2;      # @storage : @parameter%configNftAuction : @storage
+            CDAR;       # big_map nat (ticket nat) : @parameter%configNftAuction : @storage
+            NONE (ticket nat); # option (ticket nat) : big_map nat (ticket nat) : @parameter%configNftAuction : @storage
+            DIG 2;      # @parameter%configNftAuction : option (ticket nat) : big_map nat (ticket nat) : @storage
+            DUP;        # @parameter%configNftAuction : @parameter%configNftAuction : option (ticket nat) : big_map nat (ticket nat) : @storage
+            DUG 3;      # @parameter%configNftAuction : option (ticket nat) : big_map nat (ticket nat) : @parameter%configNftAuction : @storage
+            CDDDR;      # nat : option (ticket nat) : big_map nat (ticket nat) : @parameter%configNftAuction : @storage
+            GET_AND_UPDATE; # option (ticket nat) : big_map nat (ticket nat) : @parameter%configNftAuction : @storage
+            # sp.verify(match_pair_71_fst.is_some(), message = 'Ticket does not exist') # option (ticket nat) : big_map nat (ticket nat) : @parameter%configNftAuction : @storage
+            DUP;        # option (ticket nat) : option (ticket nat) : big_map nat (ticket nat) : @parameter%configNftAuction : @storage
+            DUG 2;      # option (ticket nat) : big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction : @storage
+            IF_SOME
+              {
+                DROP;       # big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction : @storage
+              }
+              {
+                PUSH string "Ticket does not exist"; # string : big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction : @storage
+                FAILWITH;   # FAILED
+              }; # big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction : @storage
+            # self.data.tickets = match_pair_71_snd # big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction : @storage
+            DIG 3;      # @storage : big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction
+            UNPAIR;     # pair (address %admin) (nat %current_id) : pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction
+            SWAP;       # pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction
+            CDR;        # big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : big_map nat (ticket nat) : option (ticket nat) : @parameter%configNftAuction
+            DIG 2;      # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : option (ticket nat) : @parameter%configNftAuction
+            PAIR;       # pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : option (ticket nat) : @parameter%configNftAuction
+            SWAP;       # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : option (ticket nat) : @parameter%configNftAuction
+            PAIR;       # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : option (ticket nat) : @parameter%configNftAuction
+            DUG 2;      # option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            # sp.transfer(sp.record(opening_price = params.opening_price, reserve_price = params.reserve_price, round_time = params.round_time, start_time = params.start_time, ticket = match_pair_71_fst.open_some()), sp.tez(0), sp.contract(sp.TRecord(opening_price = sp.TNat, reserve_price = sp.TNat, round_time = sp.TInt, start_time = sp.TTimestamp, ticket = sp.TTicket(sp.TNat)).layout((("opening_price", "reserve_price"), ("round_time", ("start_time", "ticket")))), params.auction_address, entry_point='configureAuction').open_some()) # option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            NIL operation; # list operation : option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 2;      # @parameter%configNftAuction : list operation : option (ticket nat) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DUP;        # @parameter%configNftAuction : @parameter%configNftAuction : list operation : option (ticket nat) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DUG 3;      # @parameter%configNftAuction : list operation : option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CAAR;       # address : list operation : option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CONTRACT %configureAuction (pair (pair (nat %opening_price) (nat %reserve_price)) (pair (int %round_time) (pair (timestamp %start_time) (ticket %ticket nat)))); # option (contract (pair (pair (nat %opening_price) (nat %reserve_price)) (pair (int %round_time) (pair (timestamp %start_time) (ticket %ticket nat))))) : list operation : option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            IF_SOME
+              {}
+              {
+                PUSH int 79; # int : list operation : option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+                FAILWITH;   # FAILED
+              }; # @some : list operation : option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            PUSH mutez 0; # mutez : @some : list operation : option (ticket nat) : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 3;      # option (ticket nat) : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            IF_SOME
+              {}
+              {
+                PUSH int 78; # int : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+                FAILWITH;   # FAILED
+              }; # @some : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 4;      # @parameter%configNftAuction : @some : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DUP;        # @parameter%configNftAuction : @parameter%configNftAuction : @some : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DUG 5;      # @parameter%configNftAuction : @some : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CDDAR;      # timestamp : @some : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            PAIR %start_time %ticket; # pair (timestamp %start_time) (@some %ticket) : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 4;      # @parameter%configNftAuction : pair (timestamp %start_time) (@some %ticket) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DUP;        # @parameter%configNftAuction : @parameter%configNftAuction : pair (timestamp %start_time) (@some %ticket) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DUG 5;      # @parameter%configNftAuction : pair (timestamp %start_time) (@some %ticket) : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CDAR;       # int : pair (timestamp %start_time) (@some %ticket) : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            PAIR %round_time; # pair (int %round_time) (pair (timestamp %start_time) (@some %ticket)) : mutez : @some : list operation : @parameter%configNftAuction : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 4;      # @parameter%configNftAuction : pair (int %round_time) (pair (timestamp %start_time) (@some %ticket)) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DUP;        # @parameter%configNftAuction : @parameter%configNftAuction : pair (int %round_time) (pair (timestamp %start_time) (@some %ticket)) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CADDR;      # nat : @parameter%configNftAuction : pair (int %round_time) (pair (timestamp %start_time) (@some %ticket)) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            SWAP;       # @parameter%configNftAuction : nat : pair (int %round_time) (pair (timestamp %start_time) (@some %ticket)) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CADAR;      # nat : nat : pair (int %round_time) (pair (timestamp %start_time) (@some %ticket)) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            PAIR %opening_price %reserve_price; # pair (nat %opening_price) (nat %reserve_price) : pair (int %round_time) (pair (timestamp %start_time) (@some %ticket)) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            PAIR;       # pair (pair (nat %opening_price) (nat %reserve_price)) (pair (int %round_time) (pair (timestamp %start_time) (@some %ticket))) : mutez : @some : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            TRANSFER_TOKENS; # operation : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CONS;       # list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+          }
+          {
+            SWAP;       # @storage : @parameter%createNft
+            # == createNft ==
+            # sp.verify(sp.sender == self.data.admin) # @storage : @parameter%createNft
+            DUP;        # @storage : @storage : @parameter%createNft
+            DUG 2;      # @storage : @parameter%createNft : @storage
+            CAAR;       # address : @parameter%createNft : @storage
+            SENDER;     # address : address : @parameter%createNft : @storage
+            COMPARE;    # int : @parameter%createNft : @storage
+            EQ;         # bool : @parameter%createNft : @storage
+            IF
+              {}
+              {
+                PUSH string "WrongCondition: sp.sender == self.data.admin"; # string : @parameter%createNft : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%createNft : @storage
+            # ticket_31 = sp.local("ticket_31", sp.ticket(self.data.current_id, 1)) # @parameter%createNft : @storage
+            PUSH nat 1; # nat : @parameter%createNft : @storage
+            DIG 2;      # @storage : nat : @parameter%createNft
+            DUP;        # @storage : @storage : nat : @parameter%createNft
+            DUG 3;      # @storage : nat : @parameter%createNft : @storage
+            CADR;       # nat : nat : @parameter%createNft : @storage
+            TICKET;     # ticket nat : @parameter%createNft : @storage
+            # self.data.tickets[self.data.current_id] = ticket_31.value # ticket nat : @parameter%createNft : @storage
+            DIG 2;      # @storage : ticket nat : @parameter%createNft
+            DUP;        # @storage : @storage : ticket nat : @parameter%createNft
+            DUG 3;      # @storage : ticket nat : @parameter%createNft : @storage
+            UNPAIR;     # pair (address %admin) (nat %current_id) : pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : ticket nat : @parameter%createNft : @storage
+            SWAP;       # pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : ticket nat : @parameter%createNft : @storage
+            UNPAIR;     # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : ticket nat : @parameter%createNft : @storage
+            DIG 5;      # @storage : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : ticket nat : @parameter%createNft
+            CADR;       # nat : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : ticket nat : @parameter%createNft
+            DIG 4;      # ticket nat : nat : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : @parameter%createNft
+            SOME;       # option (ticket nat) : nat : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : @parameter%createNft
+            SWAP;       # nat : option (ticket nat) : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : @parameter%createNft
+            UPDATE;     # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : @parameter%createNft
+            PAIR;       # pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : @parameter%createNft
+            SWAP;       # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : @parameter%createNft
+            PAIR;       # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : @parameter%createNft
+            # self.data.token_metadata[self.data.current_id] = (self.data.current_id, params) # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : @parameter%createNft
+            DUP;        # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : @parameter%createNft
+            DUG 2;      # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : @parameter%createNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            UNPAIR;     # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : @parameter%createNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            SWAP;       # pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : @parameter%createNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            UNPAIR;     # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : @parameter%createNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            SWAP;       # big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id) : @parameter%createNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 4;      # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id) : @parameter%createNft
+            DUP;        # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id) : @parameter%createNft
+            DUG 5;      # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id) : @parameter%createNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CADR;       # nat : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id) : @parameter%createNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 4;      # @parameter%createNft : nat : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 5;      # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : @parameter%createNft : nat : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id)
+            CADR;       # nat : @parameter%createNft : nat : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id)
+            PAIR;       # pair nat @parameter%createNft : nat : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id)
+            SOME;       # option (pair nat @parameter%createNft) : nat : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id)
+            SWAP;       # nat : option (pair nat @parameter%createNft) : big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id)
+            UPDATE;     # big_map nat (pair nat (map string bytes)) : big_map nat (ticket nat) : pair (address %admin) (nat %current_id)
+            SWAP;       # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id)
+            PAIR;       # pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id)
+            SWAP;       # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PAIR;       # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            # self.data.current_id += 1 # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            UNPAIR;     # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            UNPAIR;     # address : nat : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            SWAP;       # nat : address : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PUSH nat 1; # nat : nat : address : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            ADD;        # nat : address : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            SWAP;       # address : nat : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PAIR;       # pair address nat : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PAIR;       # pair (pair address nat) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            NIL operation; # list operation : pair (pair address nat) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+          }; # list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+      }
+      {
+        IF_LEFT
+          {
+            # == receiveNft ==
+            # match_pair_41_fst, match_pair_41_snd = sp.match_tuple(sp.read_ticket(params), names = [ "match_pair_41_fst", "match_pair_41_snd" ]) # @parameter%receiveNft : @storage
+            DUP;        # @parameter%receiveNft : @parameter%receiveNft : @storage
+            READ_TICKET; # pair address (pair nat nat) : ticket nat : @parameter%receiveNft : @storage
+            # compute_42 = sp.local("compute_42", sp.snd(sp.snd(match_pair_41_fst))) # pair address (pair nat nat) : ticket nat : @parameter%receiveNft : @storage
+            DUP;        # pair address (pair nat nat) : pair address (pair nat nat) : ticket nat : @parameter%receiveNft : @storage
+            DUG 2;      # pair address (pair nat nat) : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            CDDR;       # nat : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            # compute_43 = sp.local("compute_43", sp.fst(match_pair_41_fst))
+            # compute_44 = sp.local("compute_44", sp.fst(sp.snd(match_pair_41_fst)))
+            # sp.verify(compute_42.value == 1, message = 'Only send 1 Nft to this entrypoint') # nat : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            PUSH nat 1; # nat : nat : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            COMPARE;    # int : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            EQ;         # bool : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            IF
+              {}
+              {
+                PUSH string "Only send 1 Nft to this entrypoint"; # string : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+                FAILWITH;   # FAILED
+              }; # ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            # sp.verify(sp.source == self.data.admin, message = 'Ticket needs to be sent by wallet admin') # ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            DIG 3;      # @storage : ticket nat : pair address (pair nat nat) : @parameter%receiveNft
+            DUP;        # @storage : @storage : ticket nat : pair address (pair nat nat) : @parameter%receiveNft
+            DUG 4;      # @storage : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            CAAR;       # address : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            SOURCE;     # address : address : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            COMPARE;    # int : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            EQ;         # bool : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+            IF
+              {
+                SWAP;       # pair address (pair nat nat) : ticket nat : @parameter%receiveNft : @storage
+                DROP;       # ticket nat : @parameter%receiveNft : @storage
+                SWAP;       # @parameter%receiveNft : ticket nat : @storage
+                DROP;       # ticket nat : @storage
+              }
+              {
+                PUSH string "Ticket needs to be sent by wallet admin"; # string : ticket nat : pair address (pair nat nat) : @parameter%receiveNft : @storage
+                FAILWITH;   # FAILED
+              }; # ticket nat : @storage
+            SWAP;       # @storage : ticket nat
+            # self.data.tickets[self.data.current_id] = match_pair_41_snd # @storage : ticket nat
+            DUP;        # @storage : @storage : ticket nat
+            DUG 2;      # @storage : ticket nat : @storage
+            UNPAIR;     # pair (address %admin) (nat %current_id) : pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : ticket nat : @storage
+            SWAP;       # pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : ticket nat : @storage
+            UNPAIR;     # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : ticket nat : @storage
+            DIG 4;      # @storage : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : ticket nat
+            CADR;       # nat : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : ticket nat
+            DIG 4;      # ticket nat : nat : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id)
+            SOME;       # option (ticket nat) : nat : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id)
+            SWAP;       # nat : option (ticket nat) : big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id)
+            UPDATE;     # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id)
+            PAIR;       # pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id)
+            SWAP;       # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PAIR;       # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            # self.data.current_id += 1 # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            UNPAIR;     # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            UNPAIR;     # address : nat : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            SWAP;       # nat : address : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PUSH nat 1; # nat : nat : address : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            ADD;        # nat : address : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            SWAP;       # address : nat : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PAIR;       # pair address nat : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))
+            PAIR;       # pair (pair address nat) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            NIL operation; # list operation : pair (pair address nat) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+          }
+          {
+            SWAP;       # @storage : @parameter%sendNft
+            # == sendNft ==
+            # sp.verify(sp.sender == self.data.admin) # @storage : @parameter%sendNft
+            DUP;        # @storage : @storage : @parameter%sendNft
+            DUG 2;      # @storage : @parameter%sendNft : @storage
+            CAAR;       # address : @parameter%sendNft : @storage
+            SENDER;     # address : address : @parameter%sendNft : @storage
+            COMPARE;    # int : @parameter%sendNft : @storage
+            EQ;         # bool : @parameter%sendNft : @storage
+            IF
+              {}
+              {
+                PUSH string "WrongCondition: sp.sender == self.data.admin"; # string : @parameter%sendNft : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%sendNft : @storage
+            SWAP;       # @storage : @parameter%sendNft
+            # match_pair_56_fst, match_pair_56_snd = sp.match_tuple(sp.get_and_update(self.data.tickets, params.ticket_id, sp.none), names = [ "match_pair_56_fst", "match_pair_56_snd" ]) # @storage : @parameter%sendNft
+            DUP;        # @storage : @storage : @parameter%sendNft
+            DUG 2;      # @storage : @parameter%sendNft : @storage
+            CDAR;       # big_map nat (ticket nat) : @parameter%sendNft : @storage
+            NONE (ticket nat); # option (ticket nat) : big_map nat (ticket nat) : @parameter%sendNft : @storage
+            DIG 2;      # @parameter%sendNft : option (ticket nat) : big_map nat (ticket nat) : @storage
+            DUP;        # @parameter%sendNft : @parameter%sendNft : option (ticket nat) : big_map nat (ticket nat) : @storage
+            DUG 3;      # @parameter%sendNft : option (ticket nat) : big_map nat (ticket nat) : @parameter%sendNft : @storage
+            CDR;        # nat : option (ticket nat) : big_map nat (ticket nat) : @parameter%sendNft : @storage
+            GET_AND_UPDATE; # option (ticket nat) : big_map nat (ticket nat) : @parameter%sendNft : @storage
+            # sp.verify(match_pair_56_fst.is_some(), message = 'Ticket does not exist') # option (ticket nat) : big_map nat (ticket nat) : @parameter%sendNft : @storage
+            DUP;        # option (ticket nat) : option (ticket nat) : big_map nat (ticket nat) : @parameter%sendNft : @storage
+            DUG 2;      # option (ticket nat) : big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft : @storage
+            IF_SOME
+              {
+                DROP;       # big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft : @storage
+              }
+              {
+                PUSH string "Ticket does not exist"; # string : big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft : @storage
+                FAILWITH;   # FAILED
+              }; # big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft : @storage
+            # self.data.tickets = match_pair_56_snd # big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft : @storage
+            DIG 3;      # @storage : big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft
+            UNPAIR;     # pair (address %admin) (nat %current_id) : pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft
+            SWAP;       # pair (big_map %tickets nat (ticket nat)) (big_map %token_metadata nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft
+            CDR;        # big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : big_map nat (ticket nat) : option (ticket nat) : @parameter%sendNft
+            DIG 2;      # big_map nat (ticket nat) : big_map nat (pair nat (map string bytes)) : pair (address %admin) (nat %current_id) : option (ticket nat) : @parameter%sendNft
+            PAIR;       # pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : pair (address %admin) (nat %current_id) : option (ticket nat) : @parameter%sendNft
+            SWAP;       # pair (address %admin) (nat %current_id) : pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))) : option (ticket nat) : @parameter%sendNft
+            PAIR;       # pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))) : option (ticket nat) : @parameter%sendNft
+            DUG 2;      # option (ticket nat) : @parameter%sendNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            # sp.transfer(match_pair_56_fst.open_some(), sp.tez(0), params.send_to) # option (ticket nat) : @parameter%sendNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            NIL operation; # list operation : option (ticket nat) : @parameter%sendNft : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 2;      # @parameter%sendNft : list operation : option (ticket nat) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CAR;        # contract (ticket nat) : list operation : option (ticket nat) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            PUSH mutez 0; # mutez : contract (ticket nat) : list operation : option (ticket nat) : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            DIG 3;      # option (ticket nat) : mutez : contract (ticket nat) : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            IF_SOME
+              {}
+              {
+                PUSH int 60; # int : mutez : contract (ticket nat) : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+                FAILWITH;   # FAILED
+              }; # @some : mutez : contract (ticket nat) : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            TRANSFER_TOKENS; # operation : list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+            CONS;       # list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+          }; # list operation : pair (pair address nat) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+      }; # list operation : pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes))))
+    PAIR;       # pair (list operation) (pair (pair (address %admin) (nat %current_id)) (pair (big_map nat (ticket nat)) (big_map nat (pair nat (map string bytes)))))
+  };

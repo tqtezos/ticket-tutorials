@@ -1,0 +1,493 @@
+parameter (or (or (address %buy) (unit %cancelAuction)) (or (pair %configureAuction (pair (nat %opening_price) (nat %reserve_price)) (pair (int %round_time) (pair (timestamp %start_time) (ticket %ticket nat)))) (or (nat %dropPrice) (unit %startAuction))));
+storage   (pair (pair (nat %current_price) (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))));
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    IF_LEFT
+      {
+        IF_LEFT
+          {
+            SWAP;       # @storage : @parameter%buy
+            # == buy ==
+            # sp.verify(self.data.in_progress) # @storage : @parameter%buy
+            DUP;        # @storage : @storage : @parameter%buy
+            DUG 2;      # @storage : @parameter%buy : @storage
+            CADAR;      # bool : @parameter%buy : @storage
+            IF
+              {}
+              {
+                PUSH string "WrongCondition: self.data.in_progress"; # string : @parameter%buy : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%buy : @storage
+            SWAP;       # @storage : @parameter%buy
+            # sp.verify(~ (sp.sender == self.data.owner)) # @storage : @parameter%buy
+            DUP;        # @storage : @storage : @parameter%buy
+            DUG 2;      # @storage : @parameter%buy : @storage
+            CADDR;      # address : @parameter%buy : @storage
+            SENDER;     # address : address : @parameter%buy : @storage
+            COMPARE;    # int : @parameter%buy : @storage
+            EQ;         # bool : @parameter%buy : @storage
+            IF
+              {
+                PUSH string "WrongCondition: ~ (sp.sender == self.data.owner)"; # string : @parameter%buy : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @parameter%buy : @storage
+            # sp.verify(sp.amount == sp.mutez(self.data.current_price)) # @parameter%buy : @storage
+            PUSH mutez 1; # mutez : @parameter%buy : @storage
+            DIG 2;      # @storage : mutez : @parameter%buy
+            DUP;        # @storage : @storage : mutez : @parameter%buy
+            DUG 3;      # @storage : mutez : @parameter%buy : @storage
+            CAAR;       # nat : mutez : @parameter%buy : @storage
+            MUL;        # mutez : @parameter%buy : @storage
+            AMOUNT;     # mutez : mutez : @parameter%buy : @storage
+            COMPARE;    # int : @parameter%buy : @storage
+            EQ;         # bool : @parameter%buy : @storage
+            IF
+              {}
+              {
+                PUSH string "WrongCondition: sp.amount == sp.mutez(self.data.current_price)"; # string : @parameter%buy : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%buy : @storage
+            SWAP;       # @storage : @parameter%buy
+            # sp.verify(sp.now < sp.add_seconds(self.data.start_time, self.data.round_time)) # @storage : @parameter%buy
+            DUP;        # @storage : @storage : @parameter%buy
+            CDDAR;      # timestamp : @storage : @parameter%buy
+            SWAP;       # @storage : timestamp : @parameter%buy
+            DUP;        # @storage : @storage : timestamp : @parameter%buy
+            DUG 3;      # @storage : timestamp : @parameter%buy : @storage
+            CDADR;      # int : timestamp : @parameter%buy : @storage
+            ADD;        # timestamp : @parameter%buy : @storage
+            NOW;        # timestamp : timestamp : @parameter%buy : @storage
+            COMPARE;    # int : @parameter%buy : @storage
+            LT;         # bool : @parameter%buy : @storage
+            IF
+              {}
+              {
+                PUSH string "WrongCondition: sp.now < sp.add_seconds(self.data.start_time, self.data.round_time)"; # string : @parameter%buy : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%buy : @storage
+            # sp.send(self.data.owner, sp.amount) # @parameter%buy : @storage
+            NIL operation; # list operation : @parameter%buy : @storage
+            DIG 2;      # @storage : list operation : @parameter%buy
+            DUP;        # @storage : @storage : list operation : @parameter%buy
+            DUG 3;      # @storage : list operation : @parameter%buy : @storage
+            CADDR;      # address : list operation : @parameter%buy : @storage
+            CONTRACT unit; # option (contract unit) : list operation : @parameter%buy : @storage
+            IF_SOME
+              {}
+              {
+                PUSH int 146; # int : list operation : @parameter%buy : @storage
+                FAILWITH;   # FAILED
+              }; # @some : list operation : @parameter%buy : @storage
+            AMOUNT;     # mutez : @some : list operation : @parameter%buy : @storage
+            UNIT;       # unit : mutez : @some : list operation : @parameter%buy : @storage
+            TRANSFER_TOKENS; # operation : list operation : @parameter%buy : @storage
+            CONS;       # list operation : @parameter%buy : @storage
+            SWAP;       # @parameter%buy : list operation : @storage
+            # sp.transfer(self.data.ticket.open_some(), sp.tez(0), sp.contract(sp.TTicket(sp.TNat), params, entry_point='receiveNft').open_some()) # @parameter%buy : list operation : @storage
+            CONTRACT %receiveNft (ticket nat); # option (contract (ticket nat)) : list operation : @storage
+            IF_SOME
+              {}
+              {
+                PUSH int 149; # int : list operation : @storage
+                FAILWITH;   # FAILED
+              }; # @some : list operation : @storage
+            PUSH mutez 0; # mutez : @some : list operation : @storage
+            DIG 3;      # @storage : mutez : @some : list operation
+            DUP;        # @storage : @storage : mutez : @some : list operation
+            DUG 4;      # @storage : mutez : @some : list operation : @storage
+            CDDDR;      # option (ticket nat) : mutez : @some : list operation : @storage
+            IF_SOME
+              {}
+              {
+                PUSH int 150; # int : mutez : @some : list operation : @storage
+                FAILWITH;   # FAILED
+              }; # @some : mutez : @some : list operation : @storage
+            TRANSFER_TOKENS; # operation : list operation : @storage
+            CONS;       # list operation : @storage
+            SWAP;       # @storage : list operation
+            # self.data.ticket = sp.none # @storage : list operation
+            UNPAIR;     # pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : list operation
+            SWAP;       # pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            UNPAIR;     # pair (nat %reserve_price) (int %round_time) : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # pair (timestamp %start_time) (option %ticket (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            CAR;        # timestamp : pair (nat %reserve_price) (int %round_time) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            NONE (ticket nat); # option (ticket nat) : timestamp : pair (nat %reserve_price) (int %round_time) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # timestamp : option (ticket nat) : pair (nat %reserve_price) (int %round_time) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            PAIR;       # pair timestamp (option (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # pair (nat %reserve_price) (int %round_time) : pair timestamp (option (ticket nat)) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            PAIR;       # pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair (pair (nat %current_price) (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))) : list operation
+            # self.data.in_progress = False # pair (pair (nat %current_price) (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))) : list operation
+            UNPAIR;     # pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            UNPAIR;     # nat : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            SWAP;       # pair (bool %in_progress) (address %owner) : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            CDR;        # address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PUSH bool False; # bool : address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair bool address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            SWAP;       # nat : pair bool address : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair nat (pair bool address) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))) : list operation
+            SWAP;       # list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+          }
+          {
+            DROP;       # @storage
+            # == cancelAuction ==
+            # sp.verify(self.data.in_progress, message = 'No Auction in progress') # @storage
+            DUP;        # @storage : @storage
+            CADAR;      # bool : @storage
+            IF
+              {}
+              {
+                PUSH string "No Auction in progress"; # string : @storage
+                FAILWITH;   # FAILED
+              }; # @storage
+            # sp.verify(sp.sender == self.data.owner, message = 'User not Authorized') # @storage
+            DUP;        # @storage : @storage
+            CADDR;      # address : @storage
+            SENDER;     # address : address : @storage
+            COMPARE;    # int : @storage
+            EQ;         # bool : @storage
+            IF
+              {}
+              {
+                PUSH string "User not Authorized"; # string : @storage
+                FAILWITH;   # FAILED
+              }; # @storage
+            # self.data.current_price = 0 # @storage
+            UNPAIR;     # pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+            CDR;        # pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+            PUSH nat 0; # nat : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+            PAIR;       # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+            PAIR;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            # sp.transfer(self.data.ticket.open_some(), sp.tez(0), sp.contract(sp.TTicket(sp.TNat), self.data.owner, entry_point='receiveNft').open_some()) # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            DUP;        # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            CADDR;      # address : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            CONTRACT %receiveNft (ticket nat); # option (contract (ticket nat)) : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            IF_SOME
+              {}
+              {
+                PUSH int 163; # int : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+                FAILWITH;   # FAILED
+              }; # @some : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            NIL operation; # list operation : @some : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            SWAP;       # @some : list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            PUSH mutez 0; # mutez : @some : list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            DIG 3;      # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : mutez : @some : list operation
+            DUP;        # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : mutez : @some : list operation
+            DUG 4;      # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : mutez : @some : list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            CDDDR;      # option (ticket nat) : mutez : @some : list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            IF_SOME
+              {}
+              {
+                PUSH int 150; # int : mutez : @some : list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+                FAILWITH;   # FAILED
+              }; # @some : mutez : @some : list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            TRANSFER_TOKENS; # operation : list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            CONS;       # list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+            SWAP;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : list operation
+            # self.data.ticket = sp.none # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : list operation
+            UNPAIR;     # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : list operation
+            SWAP;       # pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            UNPAIR;     # pair (nat %reserve_price) (int %round_time) : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # pair (timestamp %start_time) (option %ticket (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            CAR;        # timestamp : pair (nat %reserve_price) (int %round_time) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            NONE (ticket nat); # option (ticket nat) : timestamp : pair (nat %reserve_price) (int %round_time) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # timestamp : option (ticket nat) : pair (nat %reserve_price) (int %round_time) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            PAIR;       # pair timestamp (option (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # pair (nat %reserve_price) (int %round_time) : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            PAIR;       # pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : list operation
+            SWAP;       # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))) : list operation
+            # self.data.in_progress = False # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))) : list operation
+            UNPAIR;     # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            UNPAIR;     # nat : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            SWAP;       # pair (bool %in_progress) (address %owner) : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            CDR;        # address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PUSH bool False; # bool : address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair bool address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            SWAP;       # nat : pair bool address : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair nat (pair bool address) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : list operation
+            PAIR;       # pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))) : list operation
+            SWAP;       # list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+          }; # list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+      }
+      {
+        IF_LEFT
+          {
+            SWAP;       # @storage : @parameter%configureAuction
+            # == configureAuction ==
+            # sp.verify(sp.source == self.data.owner, message = 'User Not Authorized') # @storage : @parameter%configureAuction
+            DUP;        # @storage : @storage : @parameter%configureAuction
+            DUG 2;      # @storage : @parameter%configureAuction : @storage
+            CADDR;      # address : @parameter%configureAuction : @storage
+            SOURCE;     # address : address : @parameter%configureAuction : @storage
+            COMPARE;    # int : @parameter%configureAuction : @storage
+            EQ;         # bool : @parameter%configureAuction : @storage
+            IF
+              {}
+              {
+                PUSH string "User Not Authorized"; # string : @parameter%configureAuction : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%configureAuction : @storage
+            SWAP;       # @storage : @parameter%configureAuction
+            # sp.verify(~ self.data.in_progress, message = 'Auction in progress') # @storage : @parameter%configureAuction
+            DUP;        # @storage : @storage : @parameter%configureAuction
+            DUG 2;      # @storage : @parameter%configureAuction : @storage
+            CADAR;      # bool : @parameter%configureAuction : @storage
+            IF
+              {
+                PUSH string "Auction in progress"; # string : @parameter%configureAuction : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @parameter%configureAuction : @storage
+            SWAP;       # @storage : @parameter%configureAuction
+            # self.data.current_price = params.opening_price # @storage : @parameter%configureAuction
+            UNPAIR;     # pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            CDR;        # pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            DIG 2;      # @parameter%configureAuction : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+            DUP;        # @parameter%configureAuction : @parameter%configureAuction : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+            DUG 3;      # @parameter%configureAuction : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            CAAR;       # nat : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            PAIR;       # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            PAIR;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : @parameter%configureAuction
+            # self.data.reserve_price = params.reserve_price # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : @parameter%configureAuction
+            UNPAIR;     # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            SWAP;       # pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            UNPAIR;     # pair (nat %reserve_price) (int %round_time) : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            CDR;        # int : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            DIG 3;      # @parameter%configureAuction : int : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner))
+            DUP;        # @parameter%configureAuction : @parameter%configureAuction : int : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner))
+            DUG 4;      # @parameter%configureAuction : int : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            CADR;       # nat : int : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            PAIR;       # pair nat int : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            PAIR;       # pair (pair nat int) (pair (timestamp %start_time) (option %ticket (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            SWAP;       # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair nat int) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            PAIR;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : @parameter%configureAuction
+            # self.data.start_time = params.start_time # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair (timestamp %start_time) (option %ticket (ticket nat)))) : @parameter%configureAuction
+            UNPAIR;     # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair nat int) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%configureAuction
+            SWAP;       # pair (pair nat int) (pair (timestamp %start_time) (option %ticket (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            UNPAIR;     # pair nat int : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            SWAP;       # pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat int : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            CDR;        # option (ticket nat) : pair nat int : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            DIG 3;      # @parameter%configureAuction : option (ticket nat) : pair nat int : pair nat (pair (bool %in_progress) (address %owner))
+            DUP;        # @parameter%configureAuction : @parameter%configureAuction : option (ticket nat) : pair nat int : pair nat (pair (bool %in_progress) (address %owner))
+            DUG 4;      # @parameter%configureAuction : option (ticket nat) : pair nat int : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            CDDAR;      # timestamp : option (ticket nat) : pair nat int : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            PAIR;       # pair timestamp (option (ticket nat)) : pair nat int : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            SWAP;       # pair nat int : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            PAIR;       # pair (pair nat int) (pair timestamp (option (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            SWAP;       # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair nat int) (pair timestamp (option (ticket nat))) : @parameter%configureAuction
+            PAIR;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair timestamp (option (ticket nat)))) : @parameter%configureAuction
+            # self.data.round_time = params.round_time # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair timestamp (option (ticket nat)))) : @parameter%configureAuction
+            UNPAIR;     # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair nat int) (pair timestamp (option (ticket nat))) : @parameter%configureAuction
+            SWAP;       # pair (pair nat int) (pair timestamp (option (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            UNPAIR;     # pair nat int : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            CAR;        # nat : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            DIG 3;      # @parameter%configureAuction : nat : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner))
+            DUP;        # @parameter%configureAuction : @parameter%configureAuction : nat : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner))
+            DUG 4;      # @parameter%configureAuction : nat : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            CDAR;       # int : nat : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            SWAP;       # nat : int : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            PAIR;       # pair nat int : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            PAIR;       # pair (pair nat int) (pair timestamp (option (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            SWAP;       # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair nat int) (pair timestamp (option (ticket nat))) : @parameter%configureAuction
+            PAIR;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair timestamp (option (ticket nat)))) : @parameter%configureAuction
+            # self.data.ticket = sp.some(params.ticket) # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair timestamp (option (ticket nat)))) : @parameter%configureAuction
+            UNPAIR;     # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair nat int) (pair timestamp (option (ticket nat))) : @parameter%configureAuction
+            SWAP;       # pair (pair nat int) (pair timestamp (option (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            UNPAIR;     # pair nat int : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            SWAP;       # pair timestamp (option (ticket nat)) : pair nat int : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            CAR;        # timestamp : pair nat int : pair nat (pair (bool %in_progress) (address %owner)) : @parameter%configureAuction
+            DIG 3;      # @parameter%configureAuction : timestamp : pair nat int : pair nat (pair (bool %in_progress) (address %owner))
+            CDDDR;      # ticket nat : timestamp : pair nat int : pair nat (pair (bool %in_progress) (address %owner))
+            SOME;       # option (ticket nat) : timestamp : pair nat int : pair nat (pair (bool %in_progress) (address %owner))
+            SWAP;       # timestamp : option (ticket nat) : pair nat int : pair nat (pair (bool %in_progress) (address %owner))
+            PAIR;       # pair timestamp (option (ticket nat)) : pair nat int : pair nat (pair (bool %in_progress) (address %owner))
+            SWAP;       # pair nat int : pair timestamp (option (ticket nat)) : pair nat (pair (bool %in_progress) (address %owner))
+            PAIR;       # pair (pair nat int) (pair timestamp (option (ticket nat))) : pair nat (pair (bool %in_progress) (address %owner))
+            SWAP;       # pair nat (pair (bool %in_progress) (address %owner)) : pair (pair nat int) (pair timestamp (option (ticket nat)))
+            PAIR;       # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair timestamp (option (ticket nat))))
+          }
+          {
+            IF_LEFT
+              {
+                SWAP;       # @storage : @parameter%dropPrice
+                # == dropPrice ==
+                # sp.verify(sp.sender == self.data.owner, message = 'User not Authorized') # @storage : @parameter%dropPrice
+                DUP;        # @storage : @storage : @parameter%dropPrice
+                DUG 2;      # @storage : @parameter%dropPrice : @storage
+                CADDR;      # address : @parameter%dropPrice : @storage
+                SENDER;     # address : address : @parameter%dropPrice : @storage
+                COMPARE;    # int : @parameter%dropPrice : @storage
+                EQ;         # bool : @parameter%dropPrice : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "User not Authorized"; # string : @parameter%dropPrice : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%dropPrice : @storage
+                SWAP;       # @storage : @parameter%dropPrice
+                # sp.verify(self.data.in_progress, message = 'No Auction in progress') # @storage : @parameter%dropPrice
+                DUP;        # @storage : @storage : @parameter%dropPrice
+                DUG 2;      # @storage : @parameter%dropPrice : @storage
+                CADAR;      # bool : @parameter%dropPrice : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "No Auction in progress"; # string : @parameter%dropPrice : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%dropPrice : @storage
+                SWAP;       # @storage : @parameter%dropPrice
+                # sp.verify(params < self.data.current_price, message = 'Price not dropped') # @storage : @parameter%dropPrice
+                DUP;        # @storage : @storage : @parameter%dropPrice
+                DUG 2;      # @storage : @parameter%dropPrice : @storage
+                CAAR;       # nat : @parameter%dropPrice : @storage
+                SWAP;       # @parameter%dropPrice : nat : @storage
+                DUP;        # @parameter%dropPrice : @parameter%dropPrice : nat : @storage
+                DUG 2;      # @parameter%dropPrice : nat : @parameter%dropPrice : @storage
+                COMPARE;    # int : @parameter%dropPrice : @storage
+                LT;         # bool : @parameter%dropPrice : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "Price not dropped"; # string : @parameter%dropPrice : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%dropPrice : @storage
+                SWAP;       # @storage : @parameter%dropPrice
+                # sp.verify(params >= self.data.reserve_price, message = 'Price below reserve_price') # @storage : @parameter%dropPrice
+                DUP;        # @storage : @storage : @parameter%dropPrice
+                DUG 2;      # @storage : @parameter%dropPrice : @storage
+                CDAAR;      # nat : @parameter%dropPrice : @storage
+                SWAP;       # @parameter%dropPrice : nat : @storage
+                DUP;        # @parameter%dropPrice : @parameter%dropPrice : nat : @storage
+                DUG 2;      # @parameter%dropPrice : nat : @parameter%dropPrice : @storage
+                COMPARE;    # int : @parameter%dropPrice : @storage
+                GE;         # bool : @parameter%dropPrice : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "Price below reserve_price"; # string : @parameter%dropPrice : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%dropPrice : @storage
+                SWAP;       # @storage : @parameter%dropPrice
+                # sp.verify(sp.now > sp.add_seconds(self.data.start_time, self.data.round_time), message = 'Previous round has not ended') # @storage : @parameter%dropPrice
+                DUP;        # @storage : @storage : @parameter%dropPrice
+                CDDAR;      # timestamp : @storage : @parameter%dropPrice
+                SWAP;       # @storage : timestamp : @parameter%dropPrice
+                DUP;        # @storage : @storage : timestamp : @parameter%dropPrice
+                DUG 3;      # @storage : timestamp : @parameter%dropPrice : @storage
+                CDADR;      # int : timestamp : @parameter%dropPrice : @storage
+                ADD;        # timestamp : @parameter%dropPrice : @storage
+                NOW;        # timestamp : timestamp : @parameter%dropPrice : @storage
+                COMPARE;    # int : @parameter%dropPrice : @storage
+                GT;         # bool : @parameter%dropPrice : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "Previous round has not ended"; # string : @parameter%dropPrice : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%dropPrice : @storage
+                SWAP;       # @storage : @parameter%dropPrice
+                # self.data.current_price = params # @storage : @parameter%dropPrice
+                UNPAIR;     # pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%dropPrice
+                CDR;        # pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : @parameter%dropPrice
+                DIG 2;      # @parameter%dropPrice : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                PAIR;       # pair @parameter%dropPrice (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                PAIR;       # pair (pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+                # self.data.start_time = sp.now # pair (pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+                UNPAIR;     # pair @parameter%dropPrice (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                SWAP;       # pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                UNPAIR;     # pair (nat %reserve_price) (int %round_time) : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                SWAP;       # pair (timestamp %start_time) (option %ticket (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                CDR;        # option (ticket nat) : pair (nat %reserve_price) (int %round_time) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                NOW;        # timestamp : option (ticket nat) : pair (nat %reserve_price) (int %round_time) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                PAIR;       # pair timestamp (option (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                SWAP;       # pair (nat %reserve_price) (int %round_time) : pair timestamp (option (ticket nat)) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                PAIR;       # pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))
+                SWAP;       # pair @parameter%dropPrice (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))
+                PAIR;       # pair (pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+              }
+              {
+                DROP;       # @storage
+                # == startAuction ==
+                # sp.verify(sp.sender == self.data.owner, message = 'User not Authorized') # @storage
+                DUP;        # @storage : @storage
+                CADDR;      # address : @storage
+                SENDER;     # address : address : @storage
+                COMPARE;    # int : @storage
+                EQ;         # bool : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "User not Authorized"; # string : @storage
+                    FAILWITH;   # FAILED
+                  }; # @storage
+                # sp.verify(~ self.data.in_progress, message = 'Auction in progress') # @storage
+                DUP;        # @storage : @storage
+                CADAR;      # bool : @storage
+                IF
+                  {
+                    PUSH string "Auction in progress"; # string : @storage
+                    FAILWITH;   # FAILED
+                  }
+                  {}; # @storage
+                # sp.verify(self.data.ticket.is_some(), message = 'No ticket to auction') # @storage
+                DUP;        # @storage : @storage
+                CDDDR;      # option (ticket nat) : @storage
+                IF_SOME
+                  {
+                    DROP;       # @storage
+                  }
+                  {
+                    PUSH string "No ticket to auction"; # string : @storage
+                    FAILWITH;   # FAILED
+                  }; # @storage
+                # sp.verify(sp.now >= self.data.start_time, message = 'Too early to start auction') # @storage
+                DUP;        # @storage : @storage
+                CDDAR;      # timestamp : @storage
+                NOW;        # timestamp : timestamp : @storage
+                COMPARE;    # int : @storage
+                GE;         # bool : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "Too early to start auction"; # string : @storage
+                    FAILWITH;   # FAILED
+                  }; # @storage
+                # self.data.in_progress = True # @storage
+                UNPAIR;     # pair (nat %current_price) (pair (bool %in_progress) (address %owner)) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                UNPAIR;     # nat : pair (bool %in_progress) (address %owner) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                SWAP;       # pair (bool %in_progress) (address %owner) : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                CDR;        # address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                PUSH bool True; # bool : address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                PAIR;       # pair bool address : nat : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                SWAP;       # nat : pair bool address : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                PAIR;       # pair nat (pair bool address) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                PAIR;       # pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+                # self.data.start_time = sp.now # pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))))
+                UNPAIR;     # pair nat (pair bool address) : pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat)))
+                SWAP;       # pair (pair (nat %reserve_price) (int %round_time)) (pair (timestamp %start_time) (option %ticket (ticket nat))) : pair nat (pair bool address)
+                UNPAIR;     # pair (nat %reserve_price) (int %round_time) : pair (timestamp %start_time) (option %ticket (ticket nat)) : pair nat (pair bool address)
+                SWAP;       # pair (timestamp %start_time) (option %ticket (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair nat (pair bool address)
+                CDR;        # option (ticket nat) : pair (nat %reserve_price) (int %round_time) : pair nat (pair bool address)
+                NOW;        # timestamp : option (ticket nat) : pair (nat %reserve_price) (int %round_time) : pair nat (pair bool address)
+                PAIR;       # pair timestamp (option (ticket nat)) : pair (nat %reserve_price) (int %round_time) : pair nat (pair bool address)
+                SWAP;       # pair (nat %reserve_price) (int %round_time) : pair timestamp (option (ticket nat)) : pair nat (pair bool address)
+                PAIR;       # pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))) : pair nat (pair bool address)
+                SWAP;       # pair nat (pair bool address) : pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))
+                PAIR;       # pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+              }; # pair (pair @parameter%dropPrice (pair (bool %in_progress) (address %owner))) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+          }; # pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair timestamp (option (ticket nat))))
+        NIL operation; # list operation : pair (pair nat (pair (bool %in_progress) (address %owner))) (pair (pair nat int) (pair timestamp (option (ticket nat))))
+      }; # list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+    NIL operation; # list operation : list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+    SWAP;       # list operation : list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+    ITER
+      {
+        CONS;       # list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+      }; # list operation : pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat))))
+    PAIR;       # pair (list operation) (pair (pair nat (pair bool address)) (pair (pair (nat %reserve_price) (int %round_time)) (pair timestamp (option (ticket nat)))))
+  };
