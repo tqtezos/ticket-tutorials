@@ -1,15 +1,15 @@
 import smartpy as sp
 
-auction_params_type = sp.TRecord(opening_price = sp.TNat,
+AUCTION_PARAMS_TYPE = sp.TRecord(opening_price = sp.TNat,
         reserve_price = sp.TNat,
         start_time = sp.TTimestamp,
         round_time = sp.TInt,
         ticket = sp.TTicket(sp.TNat))
 
-metadata_type = sp.TMap(sp.TString, sp.TBytes)
+METADATA_TYPE = sp.TMap(sp.TString, sp.TBytes)
 
-token_metadata_type = sp.TBigMap(sp.TNat,
-        sp.TPair(sp.TNat, metadata_type))
+TOKEN_METADATA_TYPE = sp.TBigMap(sp.TNat,
+        sp.TPair(sp.TNat, METADATA_TYPE))
 
 class NFTWallet(sp.Contract):
     def __init__(self, owner):
@@ -18,7 +18,7 @@ class NFTWallet(sp.Contract):
                  tickets = sp.TBigMap(sp.TNat,
                    sp.TTicket(sp.TNat)),
                  current_id = sp.TNat,
-                 token_metadata = token_metadata_type))
+                 token_metadata = TOKEN_METADATA_TYPE))
         self.init(admin = owner,
                 tickets = sp.big_map({}),
                 current_id = 0,
@@ -26,7 +26,7 @@ class NFTWallet(sp.Contract):
 
     @sp.entry_point
     def createNft(self, metadata):
-        sp.set_type(metadata, metadata_type)
+        sp.set_type(metadata, METADATA_TYPE)
         sp.verify(sp.sender == self.data.admin)
         my_ticket = sp.ticket(self.data.current_id, 1)
         current_id = self.data.current_id
@@ -76,7 +76,7 @@ class NFTWallet(sp.Contract):
                 start_time = params.start_time,
                 round_time = params.round_time,
                 ticket = my_ticket.open_some())
-        auction_contract = sp.contract(auction_params_type, params.auction_address, entry_point = "configureAuction").open_some()
+        auction_contract = sp.contract(AUCTION_PARAMS_TYPE, params.auction_address, entry_point = "configureAuction").open_some()
         sp.transfer(auction_params, sp.mutez(0), auction_contract)
 
 class DutchAuction(sp.Contract):
@@ -99,7 +99,7 @@ class DutchAuction(sp.Contract):
 
     @sp.entry_point
     def configureAuction(self, params):
-        sp.set_type(params, auction_params_type)
+        sp.set_type(params, AUCTION_PARAMS_TYPE)
         sp.verify(sp.source == self.data.owner, "User Not Authorized")
         sp.verify(~self.data.in_progress, "Auction in progress")
 
