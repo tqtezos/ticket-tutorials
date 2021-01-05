@@ -11,7 +11,8 @@
           (pair (nat %current_price)
                 (pair (nat %reserve_price)
                       (pair (bool %in_progress)
-                            (pair (timestamp %start_time) (pair (int %round_time) (option %ticket (ticket nat)))))))) ;
+                            (pair (timestamp %start_time)
+                                  (pair (int %round_time) (big_map %ticket nat (ticket nat)))))))) ;
   code { UNPAIR ;
          SWAP ;
          DUP ;
@@ -68,13 +69,16 @@
                          PUSH unit Unit ;
                          TRANSFER_TOKENS ;
                          DIG 2 ;
+                         NONE (ticket nat) ;
+                         PUSH nat 0 ;
+                         GET_AND_UPDATE ;
                          IF_NONE
-                           { DROP 3 ; PUSH string "ticket does not exist" ; FAILWITH }
-                           { DIG 2 ;
+                           { DROP 4 ; PUSH string "ticket does not exist" ; FAILWITH }
+                           { DIG 3 ;
                              PUSH mutez 0 ;
                              DIG 2 ;
                              TRANSFER_TOKENS ;
-                             NONE (ticket nat) ;
+                             SWAP ;
                              DIG 3 ;
                              DUP ;
                              DUG 4 ;
@@ -161,38 +165,41 @@
                      DIG 2 ;
                      IF {} { PUSH string "failed assertion" ; FAILWITH } ;
                      SWAP ;
+                     NONE (ticket nat) ;
+                     PUSH nat 0 ;
+                     GET_AND_UPDATE ;
                      IF_NONE
-                       { DROP 2 ; PUSH string "ticket does not exist" ; FAILWITH }
-                       { SWAP ;
+                       { DROP 3 ; PUSH string "ticket does not exist" ; FAILWITH }
+                       { DIG 2 ;
                          PUSH mutez 0 ;
                          DIG 2 ;
                          TRANSFER_TOKENS ;
-                         SWAP ;
+                         DIG 2 ;
                          DUP ;
-                         DUG 2 ;
+                         DUG 3 ;
                          CDR ;
                          CDR ;
                          CDR ;
                          CDR ;
                          PUSH bool False ;
                          PAIR ;
-                         DIG 2 ;
+                         DIG 3 ;
                          DUP ;
-                         DUG 3 ;
+                         DUG 4 ;
                          CDR ;
                          CDR ;
                          CAR ;
                          PAIR ;
-                         DIG 2 ;
+                         DIG 3 ;
                          DUP ;
-                         DUG 3 ;
+                         DUG 4 ;
                          CDR ;
                          CAR ;
                          PAIR ;
-                         DIG 2 ;
+                         DIG 3 ;
                          CAR ;
                          PAIR ;
-                         NONE (ticket nat) ;
+                         DIG 2 ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
@@ -240,37 +247,38 @@
                          DIG 2 ;
                          CONS ;
                          PAIR } } }
-               { DIG 2 ;
-                 DROP ;
-                 DIG 5 ;
+               { DIG 6 ;
                  DROP ;
                  IF_LEFT
                    { SWAP ;
-                     DROP ;
-                     SWAP ;
                      DROP ;
                      DIG 2 ;
                      DROP ;
                      DIG 3 ;
                      DROP ;
-                     DIG 2 ;
+                     DIG 4 ;
+                     DROP ;
+                     DIG 3 ;
                      DUP ;
-                     DUG 3 ;
+                     DUG 4 ;
                      SOURCE ;
                      COMPARE ;
                      EQ ;
                      IF {} { PUSH string "failed assertion" ; FAILWITH } ;
-                     SWAP ;
+                     DIG 2 ;
                      DUP ;
-                     DUG 2 ;
+                     DUG 3 ;
                      NOT ;
                      IF {} { PUSH string "failed assertion" ; FAILWITH } ;
                      DUP ;
+                     DUG 2 ;
                      CDR ;
                      CDR ;
                      CDR ;
                      CDR ;
                      SOME ;
+                     PUSH nat 0 ;
+                     UPDATE ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
@@ -301,7 +309,9 @@
                      PAIR ;
                      NIL operation ;
                      PAIR }
-                   { NOW ;
+                   { DIG 2 ;
+                     DROP ;
+                     NOW ;
                      DIG 6 ;
                      SENDER ;
                      COMPARE ;
@@ -391,8 +401,10 @@
              GE ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
              SWAP ;
+             PUSH nat 0 ;
+             GET ;
              IF_NONE
-               { DROP 2 ; PUSH string "no tickets" ; FAILWITH }
+               { DROP 2 ; PUSH string "no ticket" ; FAILWITH }
                { DROP ;
                  SWAP ;
                  DUP ;

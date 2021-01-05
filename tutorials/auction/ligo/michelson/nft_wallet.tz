@@ -3,10 +3,10 @@
                    (contract %destination
                       (pair (nat %opening_price)
                             (pair (nat %reserve_price)
-                                  (pair (timestamp %start_time) (pair (nat %round_time) (ticket %ticket nat))))))
+                                  (pair (timestamp %start_time) (pair (int %round_time) (ticket %ticket nat))))))
                    (pair (nat %opening_price)
                          (pair (nat %reserve_price)
-                               (pair (timestamp %start_time) (pair (nat %round_time) (nat %ticket_id))))))
+                               (pair (timestamp %start_time) (pair (int %round_time) (nat %ticket_id))))))
                 (nat %burn))
             (or (map %mint string bytes) (ticket %receive nat)))
         (pair %send (contract %destination (ticket nat)) (nat %ticket_id))) ;
