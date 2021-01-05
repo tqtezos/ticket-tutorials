@@ -40,6 +40,7 @@ class NFTWallet(sp.Contract):
         sp.set_type(nft, sp.TTicket(sp.TNat))
         ticket_data, ticket_next = sp.read_ticket(nft)
         qty = sp.compute(sp.snd(sp.snd(ticket_data)))
+        #Not doing anything with originator or id
         originator = sp.compute(sp.fst(ticket_data))
         id = sp.compute(sp.fst(sp.snd(ticket_data)))
         sp.verify(qty == 1, "Only send 1 Nft to this entrypoint")
@@ -140,8 +141,8 @@ class DutchAuction(sp.Contract):
         sp.verify(self.data.in_progress)
         sp.verify(~(sp.sender == self.data.owner))
         sp.verify(sp.amount == sp.mutez(self.data.current_price))
-        # verify now less than round_end_time = start_time + round_time
-        sp.verify(sp.now < self.data.start_time.add_seconds(self.data.round_time))
+        # verify now less than or equal to round_end_time = start_time + round_time
+        sp.verify(sp.now <= self.data.start_time.add_seconds(self.data.round_time))
 
         sp.send(self.data.owner, sp.amount)
 
@@ -157,6 +158,7 @@ class DutchAuction(sp.Contract):
     def cancelAuction(self):
         sp.verify(self.data.in_progress, "No Auction in progress")
         sp.verify(sp.sender == self.data.owner, "User not Authorized")
+        #Can remove next line
         self.data.current_price = 0
 
         #Send back ticket to owner
