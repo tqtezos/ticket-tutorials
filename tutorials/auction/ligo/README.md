@@ -20,6 +20,12 @@ Commit Date: 2020-12-22 16:19:43 +0000
 
 # Demo
 
+The two nft-wallet contracts as well as Alice's nft-auction contract were added to edonet and can be viewed on tzstats.
+
+* Alice's wallet: https://edo.tzstats.com/KT1EAMUQC1yJ2sRPNPpLHVMGCzroYGe1C1ea
+* Bob's wallet: https://edo.tzstats.com/KT1QQukCBULzFu6samB5FpbLNBXmNzArSpTs
+* Alice's nft-auction: https://edo.tzstats.com/KT1HWaMyNmjVGMBPUSm3QxJnFRLi4LQJi1tG
+
 ## 1. Alice originates nft-auction contract
 ```
 $ tezos-client originate contract nft-auction transferring 0 from alice running "$(pwd)/michelson/nft_auction.tz" --dry-run --init "Pair (Pair \"tz1LrQB9HrJcUaD9NKEvV65tnaiU8trPXwmt\" (Pair 0 (Pair 0 (Pair False ( Pair 0 0))))) {}" --burn-cap 1
