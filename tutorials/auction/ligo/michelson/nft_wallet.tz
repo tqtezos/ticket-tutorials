@@ -2,8 +2,8 @@
     (or (or (or (pair %auction
                    (contract %destination
                       (pair (nat %opening_price)
-                            (pair (nat %reserve_price)
-                                  (pair (timestamp %start_time) (pair (int %round_time) (ticket %ticket nat))))))
+                            (pair (nat %set_reserve_price)
+                                  (pair (timestamp %set_start_time) (pair (int %set_round_time) (ticket %ticket nat))))))
                    (pair (nat %opening_price)
                          (pair (nat %reserve_price)
                                (pair (timestamp %start_time) (pair (int %round_time) (nat %ticket_id))))))

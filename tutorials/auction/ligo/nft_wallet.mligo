@@ -12,9 +12,9 @@ type token_metadata = (nat, (nat * metadata)) big_map
 type auction_contract_type =
   [@layout:comb]
   {opening_price : nat;
-  reserve_price : nat;
-  start_time : timestamp;
-  round_time : int;
+  set_reserve_price : nat;
+  set_start_time : timestamp;
+  set_round_time : int;
   ticket : (nat ticket)}
 
 type auction_parameter =
@@ -83,9 +83,9 @@ let main (arg : parameter * storage) : operation list * storage =
           | Some ticket ->
               let auction_params : auction_contract_type = {
                 opening_price = auction.opening_price;
-                reserve_price = auction.reserve_price;
-                start_time = auction.start_time;
-                round_time = auction.round_time;
+                set_reserve_price = auction.reserve_price;
+                set_start_time = auction.start_time;
+                set_round_time = auction.round_time;
                 ticket = ticket
               } in
               let op = Tezos.transaction auction_params 0mutez auction.destination in
