@@ -1,5 +1,28 @@
+# Dutch style NFT Auction with tickets
+
+This project implements a dutch style auction, using NFTs represented by tickets instead of traditional FA2 based NFTs.
+
+## Build instructions
+
+This directory contains two contracts written in CamelLigo, as well as a directory containing the generated Michelson contracts. Michelson contracts can be generated as follows:
+
+* `ligo compile-contract --protocol edo --disable-michelson-typechecking nft_wallet.mligo main > ./michelson/nft_wallet.tz`
+* `ligo compile-contract --protocol edo --disable-michelson-typechecking nft_auction.mligo main > ./michelson/nft_auction.tz`
+
+The ligo version used is:
+
 ```
-tezos-client originate contract nft-auction transferring 0 from alice running "$(pwd)/michelson/nft_auction.tz" --dry-run --init "Pair (Pair \"tz1LrQB9HrJcUaD9NKEvV65tnaiU8trPXwmt\" (Pair 0 (Pair 0 (Pair False ( Pair 0 0))))) {}" --burn-cap 1
+$ ligo --version
+Rolling release
+Commit SHA: d2310a1366a2ec1348c51bb77f4f34ff5b93539e
+Commit Date: 2020-12-22 16:19:43 +0000
+```
+
+# Demo
+
+## 1. Alice originates nft-auction contract
+```
+$ tezos-client originate contract nft-auction transferring 0 from alice running "$(pwd)/michelson/nft_auction.tz" --dry-run --init "Pair (Pair \"tz1LrQB9HrJcUaD9NKEvV65tnaiU8trPXwmt\" (Pair 0 (Pair 0 (Pair False ( Pair 0 0))))) {}" --burn-cap 1
 
 Waiting for the node to be bootstrapped...
 Current head: BLjqDeA5khok (timestamp: 2021-01-06T00:27:58.000-00:00, validation: 2021-01-06T00:28:15.004-00:00)
@@ -478,8 +501,9 @@ and/or an external block explorer.
 Contract memorized as nft-auction.
 ```
 
+## 2. Alice originates her nft-wallet contract and sets herself as the admin
 ```
-tezos-client originate contract nft-wallet transferring 0 from alice running "$(pwd)/michelson/nft_wallet.tz" --init "Pair \"tz1LrQB9HrJcUaD9NKEvV65tnaiU8trPXwmt\" (Pair {} (Pair 0 {}))" --burn-cap 0.305 >> "$(pwd)/output.txt” 2 >& 1
+$ tezos-client originate contract nft-wallet transferring 0 from alice running "$(pwd)/michelson/nft_wallet.tz" --init "Pair \"tz1LrQB9HrJcUaD9NKEvV65tnaiU8trPXwmt\" (Pair {} (Pair 0 {}))" --burn-cap 0.305
 
 Waiting for the node to be bootstrapped...
 Current head: BMFHdefZKb5g (timestamp: 2021-01-06T01:26:38.000-00:00, validation: 2021-01-06T01:27:00.749-00:00)
@@ -749,9 +773,9 @@ Use command
 and/or an external block explorer.
 Contract memorized as nft-wallet.
 ```
-
+## 3. Alice mints herself a ticket based nft with metadata pointing to byte encoded representation of https://github.com/tqtezos/ticket-tutorials/tree/main/tutorials/auction/ligo
 ```
-tezos-client transfer 0 from alice to nft-wallet --entrypoint "mint" --arg "{Elt \"\" 0x68747470733a2f2f6769746875622e636f6d2f747174657a6f732f7469636b65742d7475746f7269616c732f747265652f6d61696e2f7475746f7269616c732f61756374696f6e2f6c69676f}" --burn-cap 1 > ~/Desktop/TQ-Tezos/code/ticket-tutorials/tutorials/auction/ligo/output5.txt 2>&1
+$ tezos-client transfer 0 from alice to nft-wallet --entrypoint "mint" --arg "{Elt \"\" 0x68747470733a2f2f6769746875622e636f6d2f747174657a6f732f7469636b65742d7475746f7269616c732f747265652f6d61696e2f7475746f7269616c732f61756374696f6e2f6c69676f}" --burn-cap 1
 
 Waiting for the node to be bootstrapped...
 Current head: BMYZUPD6fiFC (timestamp: 2021-01-06T01:27:38.000-00:00, validation: 2021-01-06T01:27:56.209-00:00)
@@ -799,9 +823,10 @@ Use command
   tezos-client wait for opZoMEUqAQPRysiY9dKLduwwdurQNRFufSNSDWuquEiYgdHzsQd to be included --confirmations 30 --branch BMYZUPD6fiFCZ2rpncMoCb9DrAdKCVdyHc8HNFJYwnFtFcdk4Vy
 and/or an external block explorer.
 ```
+## 4. Alice auctions off her ticket based nft through her wallet, which sends her nft to her auction contract and configures various auction settings. The starting price of the auction is 100 mutez.
 
 ```
-tezos-client transfer 0 from alice to nft-wallet --entrypoint "auction" --arg "Pair \"KT1HWaMyNmjVGMBPUSm3QxJnFRLi4LQJi1tG%configure\" (Pair 100 (Pair 10 (Pair 0 (Pair 600 0))))" --burn-cap 1 > ~/Desktop/TQ-Tezos/code/ticket-tutorials/tutorials/auction/ligo/output6.txt 2>&1
+$ tezos-client transfer 0 from alice to nft-wallet --entrypoint "auction" --arg "Pair \"KT1HWaMyNmjVGMBPUSm3QxJnFRLi4LQJi1tG%configure\" (Pair 100 (Pair 10 (Pair 0 (Pair 600 0))))" --burn-cap 1
 
 Waiting for the node to be bootstrapped...
 Current head: BLUeXUpmoSFg (timestamp: 2021-01-06T01:29:38.000-00:00, validation: 2021-01-06T01:30:07.976-00:00)
@@ -870,9 +895,10 @@ Use command
   tezos-client wait for ooK5QXMJBWXPvEZDzaMs89D9UYFYfYmQNoaKuB4zgqCj1Tei8ci to be included --confirmations 30 --branch BM82CX9HwyUfhxLT4zUmhQj3KhUKhNCeGvcAmnHfgCiG8XHhYEd
 and/or an external block explorer.
 ```
+## 5. Alice starts her nft-auction by calling the nft-auction contract directly
 
 ```
-tezos-client transfer 0 from alice to nft-auction --entrypoint "start" --burn-cap 1  > ~/Desktop/TQ-Tezos/code/ticket-tutorials/tutorials/auction/ligo/output7.txt 2>&
+$ tezos-client transfer 0 from alice to nft-auction --entrypoint "start" --burn-cap 1  
 
 Waiting for the node to be bootstrapped...
 Current head: BLZh6tEhMq6n (timestamp: 2021-01-06T01:38:08.000-00:00, validation: 2021-01-06T01:38:27.055-00:00)
@@ -921,9 +947,9 @@ Use command
   tezos-client wait for opMf6wPTpaWmufemQnGyvbM7onTifqB296UffHokBwrxDaSXomj to be included --confirmations 30 --branch BLZh6tEhMq6nwcNvZHsduc3jeA99MdUmWCAeMrjAz66NWTStihL
 and/or an external block explorer.
 ```
-
+## 6. Bob originates his nft wallet and sets himself as the admin
 ```
-tezos-client originate contract nft-wallet-bob transferring 0 from bob running "$(pwd)/michelson/nft_wallet.tz" --init "Pair \"tz1bwfmSYqrhUTAoybGdhWBBefsbuhNdcC2Y\" (Pair {} (Pair 0 {}))" --burn-cap 1 > "$(pwd)/output8.txt" 2>&1
+tezos-client originate contract nft-wallet-bob transferring 0 from bob running "$(pwd)/michelson/nft_wallet.tz" --init "Pair \"tz1bwfmSYqrhUTAoybGdhWBBefsbuhNdcC2Y\" (Pair {} (Pair 0 {}))" --burn-cap 1
 
 Waiting for the node to be bootstrapped...
 Current head: BL6uqjE8sD1y (timestamp: 2021-01-06T01:49:38.000-00:00, validation: 2021-01-06T01:49:43.592-00:00)
@@ -1207,9 +1233,10 @@ Use command
 and/or an external block explorer.
 Contract memorized as nft-wallet-bob.
 ```
+## 7. After the time of one round has passed without anyone buying the nft, Alice drops the price of her nft to 90 mutez.
 
 ```
-tezos-client transfer 0 from alice to nft-auction --entrypoint "drop_price" --arg 90 --burn-cap 1 > ~/Desktop/TQ-Tezos/code/ticket-tutorials/tutorials/auction/ligo/output9.txt 2>&1
+tezos-client transfer 0 from alice to nft-auction --entrypoint "drop_price" --arg 90 --burn-cap
 
 
 Waiting for the node to be bootstrapped...
@@ -1255,9 +1282,9 @@ Use command
   tezos-client wait for ooPRGpr5VxKuLiVtpf2XTAfrRFKV12nYS92zu1WLEaiqSp6mTpd to be included --confirmations 30 --branch BLxDjvZH2LVC9StR6oUvP131Yj27zrn1xCZ8D3spz16ApxBxuCS
 and/or an external block explorer.
 ```
-
+## 8. Bob buys the nft by sending 90 mutez to the auction contract, calling the buy entrypoint, and sending the address of his wallet contract. The nft is sent to Bob's wallet and Alice is sent the 90 mutez.
 ```
-tezos-client transfer 0.00009 from bob to nft-auction --entrypoint "buy" --arg "\"KT1QQukCBULzFu6samB5FpbLNBXmNzArSpTs%receive\"" --burn-cap 1 > ~/Desktop/TQ-Tezos/code/ticket-tutorials/tutorials/auction/ligo/output10.txt 2>&1
+$ tezos-client transfer 0.00009 from bob to nft-auction --entrypoint "buy" --arg "\"KT1QQukCBULzFu6samB5FpbLNBXmNzArSpTs%receive\"" --burn-cap 1
 
 Waiting for the node to be bootstrapped...
 Current head: BKkprtNFhPvu (timestamp: 2021-01-06T01:56:58.000-00:00, validation: 2021-01-06T01:57:02.519-00:00)
