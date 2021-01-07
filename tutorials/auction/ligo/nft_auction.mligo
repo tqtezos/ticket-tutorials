@@ -57,7 +57,7 @@ let main (arg : parameter * storage) : operation list * storage =
             let now = Tezos.now in
             assert (Tezos.sender = data.admin);
             assert (data.in_progress);
-            (* assert (new_price < current_price); *)
+            assert (new_price < data.current_price);
             assert (new_price >= data.reserve_price);
             assert (now > data.start_time +  data.round_time);
             (([] : operation list), {tickets = tickets; data = {data with current_price = new_price; start_time = now}})
