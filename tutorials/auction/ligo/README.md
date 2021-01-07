@@ -779,7 +779,7 @@ Use command
 and/or an external block explorer.
 Contract memorized as nft-wallet.
 ```
-## 3. Alice mints herself a ticket based nft with metadata pointing to byte encoded representation of https://github.com/tqtezos/ticket-tutorials/tree/main/tutorials/auction/ligo
+## 3. Alice mints herself a ticket based nft with metadata
 ```
 $ tezos-client transfer 0 from alice to nft-wallet --entrypoint "mint" --arg "{Elt \"\" 0x68747470733a2f2f6769746875622e636f6d2f747174657a6f732f7469636b65742d7475746f7269616c732f747265652f6d61696e2f7475746f7269616c732f61756374696f6e2f6c69676f}" --burn-cap 1
 
