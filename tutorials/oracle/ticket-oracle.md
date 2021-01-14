@@ -1,8 +1,8 @@
-This tutorial demonstrates the way tickets make feasible CPS (continuation passing style) contract interaction in Tezos. The general situation is C trusts A but not B, but A wants to send C information via B. A can pass a ticket to B and B can pass that ticket to C when sending its data and now C knows that B is to be trusted because it sees the ticket was created by A. 
+This tutorial demonstrates the way tickets make multi-contract interaction simpler in Tezos. The general situation is C trusts A but not B, but A wants to send C information via B. A can pass a ticket to B and B can pass that ticket to C when sending its data and now C knows that B is to be trusted because it sees the ticket was created by A.
 
-The scenario below is an example where a wallet contract `cps-balance` has some balance of tokens in the modified FA1.2 contract `cps-bank`. `cps-bank` has a `getBalance` entrypoint but instead of sending some users balance directly to the wallet, it sends the balance to an oracle `cps-oracle` (that is given as a continuation in the entrypoint) along with an authentication ticket. The oracle then converts the balance to tez based on some conversion rate in storage and sends the converted balance along with the same ticket to the wallet `cps-balance` who knows it can trust that the balance a) came from its trusted bank and b) is actually its balance and not someone elses.  
+The scenario below is an example where a wallet contract `cps-balance` has some balance of tokens in the modified FA1.2 contract `cps-bank`. `cps-bank` has a `getBalance` entrypoint but instead of sending some users balance directly to the wallet, it sends the balance to an oracle `cps-oracle` (that is given as a continuation in the entrypoint) along with an authentication ticket. The oracle then converts the balance to tez based on some conversion rate in storage and sends the converted balance along with the same ticket to the wallet `cps-balance` who knows it can trust that the balance a) came from its trusted bank and b) is actually its balance and not someone else's.  
 
-The sequence of steps below is as follows: 
+The sequence of steps below is as follows:
 1) Originate contracts
 2) `cps-bank` mints 12 tokens to wallet `cps-balance`
 3) Alice (arbitrary address) calls getBalance entrypoint in `cps-bank` which mints a ticket wrapping wallet address and sends that ticket along with wallet balance to oracle who converts the balance to tez based on its conversion rate (2) and sends the converted balance of 24 tez along with ticket to the wallet which authenticates the ticket and records the converted balance.   
@@ -14,7 +14,7 @@ cps-bank: "KT1MPKu836t9AP6yeVE7rUm7faieYrpoKqWw"
 cps-balance: "KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP"
 cps-oracle: "KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g"
 
-## Address constants for reference 
+## Address constants for reference
 ```
 alice-edo: tz1VeDGbCBNECVML7s7vkTQGSUCtSE54ZGAv
 eli-edo: tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW
@@ -811,7 +811,7 @@ Contract memorized as cps-oracle.
 CPS-ORACLE="KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g"
 
 ```
-## Mint 12 tokens for Balance contract 
+## Mint 12 tokens for Balance contract
 
 ```
 $ ./tezos-client transfer 0 from eli-edo to cps-bank --entrypoint "mint" --arg "Pair \"KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP\" 12" --burn-cap 3000 >> ~/output.txt 2>&1
@@ -857,7 +857,7 @@ Use command
   tezos-client wait for onyAdbHctXbzUtVnZqfRHQMChZm8MoRyqenxeB3bWEH2xj9jQbv to be included --confirmations 30 --branch BLRahc4tDGVXEbqWLBLubpVVumYdz8r1bBkp2BDj8N9WmPMpeMv
 and/or an external block explorer.
 ```
-## Anyone can call getBalance entrypoint in bank contract, send that information to the Oracle to convert balance to tez,  which will then send that information to Balance contract to be recorded in its records. Balance knows that the information sent to it is in fact a) from the the trusted bank and b) his balance and not someone else's. 
+## Anyone can call getBalance entrypoint in bank contract, send that information to the Oracle to convert balance to tez,  which will then send that information to Balance contract to be recorded in its records. Balance knows that the information sent to it is in fact a) from the the trusted bank and b) his balance and not someone else's.
 
 ```
 $ ./tezos-client transfer 0 from alice-edo to cps-bank --entrypoint "getBalance" --arg "Pair \"KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP\"  \"KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g%sendConvertedBalance\"" --burn-cap 3000 --dry-run

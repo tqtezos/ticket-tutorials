@@ -1,0 +1,27 @@
+
+alice-edo: tz1VeDGbCBNECVML7s7vkTQGSUCtSE54ZGAv
+eli-edo: tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW
+
+
+./tezos-client originate contract cps-bank transferring 0 from eli-edo running ~/TQ/ticket-tutorials/tutorials/cps/bank.tz --init "(Pair (Pair "\"tz1LNX7w32LntUkXcdQe1qyvFSTgwtYAqnGW\"" {}) (Pair False 0))" --burn-cap 3000 >> ~/output.txt 2>&1
+
+CPS-BANK="KT1MPKu836t9AP6yeVE7rUm7faieYrpoKqWw"
+
+./tezos-client originate contract cps-balance transferring 0 from eli-edo running ~/TQ/ticket-tutorials/tutorials/cps/balance.tz --init "Pair "\"KT1MPKu836t9AP6yeVE7rUm7faieYrpoKqWw\"" 0" --force --burn-cap 3000 >> ~/output.txt 2>&1
+
+CPS-BALANCE="KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP"
+
+
+./tezos-client originate contract cps-oracle transferring 0 from bootstrap1 running ~/TQ/ticket-tutorials/tutorials/cps/oracle.tz --init "2" --burn-cap 3000 >> ~/output.txt 2>&1
+
+CPS-ORACLE="KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g"
+
+
+
+#TRANSFER TO CPS-BANK
+
+./tezos-client transfer 0 from eli-edo to cps-bank --entrypoint "mint" --arg "Pair \"KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP\" 12" --burn-cap 3000 >> ~/output.txt 2>&1
+
+
+#Send to Oracle, initiated by anyone! 
+./tezos-client transfer 0 from alice-edo to cps-bank --entrypoint "getBalance" --arg "Pair \"KT1QHVhxUAUEYnL4yzzTKdsHSDci12E62VhP\"  \"KT1D7MfG9CEBav7TXsa4xbPL3QZgR5eEgx7g%sendConvertedBalance\"" --burn-cap 3000 --dry-run
