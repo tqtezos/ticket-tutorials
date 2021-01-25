@@ -1,0 +1,7 @@
+parameter (pair (nat %qty) (pair (contract %fa12_transfer (pair address (pair address nat))) (contract %wallet (ticket address)))) ;
+storage unit ;
+code { UNPAIR; DUP; UNPAIR 3; # [qty : fa12_transfer : fa12wallet: (qty, fa12_transferm fa12wallet) : unit]
+       SELF_ADDRESS; SENDER; PAIR 3; PUSH mutez 0; SWAP; TRANSFER_TOKENS; #[ op : wallet : (qty, fa12_transfer, fa12wallet) : unit]
+       NIL operation; SWAP; CONS; SWAP; DROP; SWAP; UNPAIR 3; SWAP; ADDRESS; #[fa12_transfer_address : qty : fa12_wallet : [op] : unit]
+       TICKET; PUSH mutez 0; SWAP; TRANSFER_TOKENS; CONS; PAIR; #[([op1; op2], unit)]
+     }
